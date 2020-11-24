@@ -414,6 +414,8 @@ impl Filter {
     /// Get the current optimization level of the filter.
     ///
     /// See seccomp_attr_get(3) for more information.
+    ///
+    /// Note: This is only available with the `libseccomp-2-5` feature.
     #[cfg(feature = "libseccomp-2-5")]
     #[inline]
     pub fn get_optimize_level(&mut self) -> io::Result<u32> {
@@ -423,6 +425,8 @@ impl Filter {
     /// Set the optimization level of the filter.
     ///
     /// See seccomp_attr_get(3) for more information.
+    ///
+    /// Note: This is only available with the `libseccomp-2-5` feature.
     #[cfg(feature = "libseccomp-2-5")]
     #[inline]
     pub fn set_optimize_level(&mut self, level: u32) -> io::Result<()> {
