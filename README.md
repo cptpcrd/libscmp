@@ -1,5 +1,10 @@
 # libscmp
 
+[![crates.io](https://img.shields.io/crates/v/libscmp.svg)](https://crates.io/crates/libscmp)
+[![Docs](https://docs.rs/libscmp/badge.svg)](https://docs.rs/libscmp)
+[![GitHub Actions](https://github.com/cptpcrd/libscmp/workflows/CI/badge.svg?branch=master&event=push)](https://github.com/cptpcrd/libscmp/actions?query=workflow%3ACI+branch%3Amaster+event%3Apush)
+[![codecov](https://codecov.io/gh/cptpcrd/libscmp/branch/master/graph/badge.svg)](https://codecov.io/gh/cptpcrd/libscmp)
+
 A safe, **sane** Rust interface to `libseccomp` on Linux.
 
 Note: This is not a high-level interface; most functions/methods in this library directly correspond to a `libseccomp` function. However, this library provides a sane, usable interface to `libseccomp`, something that seems to be lacking.
