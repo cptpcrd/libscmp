@@ -8,6 +8,46 @@ fn arch_nonnative() -> Arch {
 }
 
 #[test]
+fn test_default_action() {
+    for action in [
+        Action::Allow,
+        Action::KillProcess,
+        Action::KillThread,
+        Action::Log,
+        Action::Errno(libc::EPERM),
+    ]
+    .iter()
+    .copied()
+    {
+        assert_eq!(
+            Filter::new(action).unwrap().get_default_action().unwrap(),
+            action
+        );
+    }
+}
+
+#[test]
+fn test_badarch_action() {
+    let mut filter = Filter::new(Action::Allow).unwrap();
+
+    assert_eq!(filter.get_badarch_action().unwrap(), Action::KillThread);
+
+    for action in [
+        Action::Allow,
+        Action::KillProcess,
+        Action::KillThread,
+        Action::Log,
+        Action::Errno(libc::EPERM),
+    ]
+    .iter()
+    .copied()
+    {
+        filter.set_badarch_action(action).unwrap();
+        assert_eq!(filter.get_badarch_action().unwrap(), action);
+    }
+}
+
+#[test]
 fn test_has_arches() {
     let filter = Filter::new(Action::Allow).unwrap();
 
