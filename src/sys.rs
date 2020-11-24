@@ -90,13 +90,10 @@ extern "C" {
 
 pub const SCMP_ACT_MASK: u32 = 0xFFFF0000;
 
-#[cfg(feature = "libseccomp-2-4")]
 pub const SCMP_ACT_KILL_PROCESS: u32 = 0x80000000;
 pub const SCMP_ACT_KILL: u32 = 0x00000000;
 pub const SCMP_ACT_TRAP: u32 = 0x00030000;
-#[cfg(feature = "libseccomp-2-5")]
 pub const SCMP_ACT_NOTIFY: u32 = 0x7FC00000;
-#[cfg(feature = "libseccomp-2-4")]
 pub const SCMP_ACT_LOG: u32 = 0x7FFC0000;
 pub const SCMP_ACT_ALLOW: u32 = 0x7FFF0000;
 
@@ -168,13 +165,8 @@ pub const SCMP_FLTATR_ACT_DEFAULT: libc::c_int = 1;
 pub const SCMP_FLTATR_ACT_BADARCH: libc::c_int = 2;
 pub const SCMP_FLTATR_CTL_NNP: libc::c_int = 3;
 pub const SCMP_FLTATR_CTL_TSYNC: libc::c_int = 4;
-#[cfg(feature = "libseccomp-2-4")]
 pub const SCMP_FLTATR_API_TSKIP: libc::c_int = 5;
-#[cfg(feature = "libseccomp-2-4")]
 pub const SCMP_FLTATR_CTL_LOG: libc::c_int = 6;
-#[cfg(feature = "libseccomp-2-5")]
 pub const SCMP_FLTATR_CTL_SSB: libc::c_int = 7;
-#[cfg(feature = "libseccomp-2-5")]
 pub const SCMP_FLTATR_CTL_OPTIMIZE: libc::c_int = 8;
-#[cfg(feature = "libseccomp-2-5")]
 pub const SCMP_FLTATR_API_SYSRAWRC: libc::c_int = 9;

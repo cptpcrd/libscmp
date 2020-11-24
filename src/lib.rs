@@ -13,7 +13,6 @@ pub use arch::{Arch, ParseArchError};
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Action {
     /// Kill the entire process (only supported in libseccomp v2.4.0+)
-    #[cfg(feature = "libseccomp-2-4")]
     KillProcess,
     /// Kill the calling thread
     KillThread,
@@ -21,10 +20,8 @@ pub enum Action {
     Trap,
     /// Notify userspace to allow further auditing of the syscall (only supported in libseccomp
     /// v2.5.0+)
-    #[cfg(feature = "libseccomp-2-5")]
     Notify,
     /// Log the action and allow the syscall to be executed (only supported in libseccomp v2.4.0+)
-    #[cfg(feature = "libseccomp-2-4")]
     Log,
     /// ALlow the syscall to be executed
     Allow,
@@ -37,13 +34,10 @@ pub enum Action {
 impl Action {
     fn to_raw(self) -> u32 {
         match self {
-            #[cfg(feature = "libseccomp-2-4")]
             Self::KillProcess => sys::SCMP_ACT_KILL_PROCESS,
             Self::KillThread => sys::SCMP_ACT_KILL,
             Self::Trap => sys::SCMP_ACT_TRAP,
-            #[cfg(feature = "libseccomp-2-5")]
             Self::Notify => sys::SCMP_ACT_NOTIFY,
-            #[cfg(feature = "libseccomp-2-4")]
             Self::Log => sys::SCMP_ACT_LOG,
             Self::Allow => sys::SCMP_ACT_ALLOW,
             Self::Errno(eno) => sys::SCMP_ACT_ERRNO(eno as u16),
@@ -53,13 +47,10 @@ impl Action {
 
     fn from_raw(val: u32) -> Option<Self> {
         match val & sys::SCMP_ACT_MASK {
-            #[cfg(feature = "libseccomp-2-4")]
             sys::SCMP_ACT_KILL_PROCESS => Some(Self::KillProcess),
             sys::SCMP_ACT_KILL => Some(Self::KillThread),
             sys::SCMP_ACT_TRAP => Some(Self::Trap),
-            #[cfg(feature = "libseccomp-2-5")]
             sys::SCMP_ACT_NOTIFY => Some(Self::Notify),
-            #[cfg(feature = "libseccomp-2-4")]
             sys::SCMP_ACT_LOG => Some(Self::Log),
             sys::SCMP_ACT_ALLOW => Some(Self::Allow),
             sys::SCMP_ACT_ERRNO_MASK => Some(Self::Errno(val as u16 as libc::c_int)),
@@ -102,19 +93,16 @@ pub enum Flag {
     /// fail.
     Tsync = sys::SCMP_FLTATR_CTL_TSYNC,
     /// Whether `libseccomp` should allow filter rules that target the -1 syscall (sometimes used
-    /// by ptrace()rs to skip syscalls). Defaults to `false`.
-    #[cfg(feature = "libseccomp-2-4")]
+    /// by ptrace()rs to skip syscalls; default `false`). Only supported on libseccomp v2.4.0+.
     Tskip = sys::SCMP_FLTATR_API_TSKIP,
-    /// Whether the kernel should log all non-"allow" actions taken (default `false`).
-    #[cfg(feature = "libseccomp-2-4")]
+    /// Whether the kernel should log all non-"allow" actions taken (default `false`). Only
+    /// supported on libseccomp v2.4.0+.
     Log = sys::SCMP_FLTATR_CTL_LOG,
     /// Whether to disable Speculative Store Bypass mitigation for this filter (default `false`).
     /// Only supported on libseccomp v2.5.0+.
-    #[cfg(feature = "libseccomp-2-5")]
     DisableSSB = sys::SCMP_FLTATR_CTL_SSB,
     /// Whether `libseccomp` should pass system error codes back to the caller instead of returning
     /// `ECANCELED` (default `false`). Only supported on libseccomp v2.5.0+.
-    #[cfg(feature = "libseccomp-2-5")]
     SysRawRC = sys::SCMP_FLTATR_API_SYSRAWRC,
 }
 
@@ -415,8 +403,7 @@ impl Filter {
     ///
     /// See seccomp_attr_get(3) for more information.
     ///
-    /// Note: This is only available with the `libseccomp-2-5` feature.
-    #[cfg(feature = "libseccomp-2-5")]
+    /// Note: This only works on libseccomp v2.5.0+.
     #[inline]
     pub fn get_optimize_level(&mut self) -> io::Result<u32> {
         self.get_attr(sys::SCMP_FLTATR_CTL_OPTIMIZE)
@@ -426,8 +413,7 @@ impl Filter {
     ///
     /// See seccomp_attr_get(3) for more information.
     ///
-    /// Note: This is only available with the `libseccomp-2-5` feature.
-    #[cfg(feature = "libseccomp-2-5")]
+    /// Note: This only works on libseccomp v2.5.0+.
     #[inline]
     pub fn set_optimize_level(&mut self, level: u32) -> io::Result<()> {
         self.set_attr(sys::SCMP_FLTATR_CTL_OPTIMIZE, level)
@@ -609,5 +595,8 @@ mod tests {
 
         #[cfg(feature = "libseccomp-2-4")]
         assert!(libseccomp_version() >= (2, 4, 0));
+
+        #[cfg(feature = "libseccomp-2-5")]
+        assert!(libseccomp_version() >= (2, 5, 0));
     }
 }
