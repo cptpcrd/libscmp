@@ -32,7 +32,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
 
-      - run: apt install libseccomp-dev
+      - run: sudo apt install libseccomp-dev
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -70,7 +70,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
 
-      - run: apt install libseccomp-dev
+      - run: sudo apt install libseccomp-dev
 
       - name: Install tarpaulin
         uses: actions-rs/install@v0.1
