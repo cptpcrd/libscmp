@@ -483,6 +483,9 @@ pub fn resolve_syscall_name_rewrite<N: AsRef<OsStr>>(arch: Arch, name: N) -> Opt
 /// Get the "API level" supported by the running kernel.
 ///
 /// See seccomp_api_get(3) for details.
+///
+/// Note: This is only available with the `libseccomp-2-4` feature.
+#[cfg(feature = "libseccomp-2-4")]
 #[inline]
 pub fn api_get() -> libc::c_uint {
     unsafe { sys::seccomp_api_get() }
@@ -491,6 +494,9 @@ pub fn api_get() -> libc::c_uint {
 /// Force the API level used by libseccomp (do not use unless you know what you're doing).
 ///
 /// See seccomp_api_set(3) for details.
+///
+/// Note: This is only available with the `libseccomp-2-4` feature.
+#[cfg(feature = "libseccomp-2-4")]
 #[inline]
 pub fn api_set(level: libc::c_uint) -> io::Result<()> {
     check_status(unsafe { sys::seccomp_api_set(level) })
@@ -570,13 +576,9 @@ mod tests {
 
     #[test]
     fn test_version() {
-        let version = libseccomp_version();
+        assert!(libseccomp_version() >= (2, 3, 0));
 
-        // We should be able to support v2.3.0+ or so
-
-        assert!(version.0 >= 2);
-        if version.0 == 2 {
-            assert!(version.1 >= 3);
-        }
+        #[cfg(feature = "libseccomp-2-4")]
+        assert!(libseccomp_version() >= (2, 4, 0));
     }
 }

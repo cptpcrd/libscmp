@@ -53,8 +53,10 @@ define_arch!(
     PPC64LE,
     S390,
     S390X,
+    // parisc and parisc64 were added in v2.4.0
     PARISC,
     PARISC64,
+    // riscv64 was added in v2.5.0
     RISCV64,
     // IMPORTANT: Architectures must be added to this list in the same order as they received
     // support in libseccomp.
@@ -67,11 +69,24 @@ impl Arch {
     /// This probes the currently loaded `libseccomp` to determine whether it supports architectures
     /// that were only added in recent versions of `libseccomp`.
     pub fn all() -> &'static [Self] {
-        // s390x support was added in libseccomp v2.3.0; we can assume it's present.
-        // However, parisc support was added in libseccomp v2.4.0; it may not be present on older
-        // systems. Let's start there.
-        let mut end = 16;
-        debug_assert_eq!(ALL_ARCHES[end], Arch::PARISC);
+        let mut end;
+
+        if cfg!(feature = "libseccomp-2-5") {
+            // Assume all architectures up through and including riscv64 are supported
+            end = 19;
+        } else if cfg!(feature = "libseccomp-2-4") {
+            // Assume all architectures up through and including parisc (but not necessarily
+            // riscv64) are supported
+
+            end = 18;
+            debug_assert_eq!(ALL_ARCHES[end], Arch::RISCV64);
+        } else {
+            // Assume all architectures up through and including s390x (but not necessarily
+            // parisc/parisc64/riscv64) are supported
+
+            end = 16;
+            debug_assert_eq!(ALL_ARCHES[end], Arch::PARISC);
+        }
 
         // Sanity check: make sure the previous architecture is supported
         debug_assert!(ALL_ARCHES[end - 1].is_supported());

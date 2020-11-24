@@ -78,12 +78,14 @@ extern "C" {
         name: *const libc::c_char,
     ) -> libc::c_int;
 
-    pub fn seccomp_api_get() -> libc::c_uint;
-    pub fn seccomp_api_set(level: libc::c_uint) -> libc::c_int;
-
     pub fn seccomp_arch_native() -> u32;
 
     pub fn seccomp_version() -> *const scmp_version;
+
+    #[cfg(feature = "libseccomp-2-4")]
+    pub fn seccomp_api_get() -> libc::c_uint;
+    #[cfg(feature = "libseccomp-2-4")]
+    pub fn seccomp_api_set(level: libc::c_uint) -> libc::c_int;
 }
 
 pub const SCMP_ACT_MASK: u32 = 0xFFFF0000;

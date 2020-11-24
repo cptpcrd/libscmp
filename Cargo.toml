@@ -11,5 +11,14 @@ categories = ["os::linux-apis"]
 keywords = ["seccomp", "libseccomp"]
 repository = "https://github.com/cptpcrd/libscmp"
 
+[features]
+default = []
+
+# Enable libseccomp v2.4.0+ features (and assume we will always run against libseccomp>=2.4.0)
+libseccomp-2-4 = []
+
+# Enable libseccomp v2.5.0+ features (and assume we will always run against libseccomp>=2.5.0)
+libseccomp-2-5 = ["libseccomp-2-4"]
+
 [dependencies]
 libc = "0.2"

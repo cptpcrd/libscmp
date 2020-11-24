@@ -1,3 +1,5 @@
+#![cfg(feature = "libseccomp-2-4")]
+
 // This must run in a test of its own so it runs in a separate process (not just a separate thread)
 // and doesn't interfere with other tests.
 
