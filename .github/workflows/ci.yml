@@ -6,7 +6,7 @@ defaults:
     shell: bash
 
 jobs:
-  build:
+  build-ubuntu:
     name: Build
 
     strategy:
@@ -51,7 +51,77 @@ jobs:
           command: test
           args: --verbose --target ${{ matrix.target }} --features "${{ matrix.features }}"
 
-  coverage-tarpaulin:
+  build-alpine:
+    name: Build
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        toolchain: [stable, beta, nightly]
+        target:
+          - x86_64-unknown-linux-musl
+        os: ['alpine:latest', 'alpine:edge']
+        features:
+          - ''
+          - libseccomp-2-4
+
+        include:
+          - toolchain: stable
+            target: x86_64-unknown-linux-musl
+            os: alpine:edge
+            features: libseccomp-2-5
+          - toolchain: beta
+            target: x86_64-unknown-linux-musl
+            os: alpine:edge
+            features: libseccomp-2-5
+          - toolchain: nightly
+            target: x86_64-unknown-linux-musl
+            os: alpine:edge
+            features: libseccomp-2-5
+
+    # Allow nightly builds to fail
+    continue-on-error: ${{ matrix.toolchain == 'nightly' }}
+
+    runs-on: ubuntu-latest
+    container: ${{ matrix.os }}
+
+    defaults:
+      run:
+        shell: sh
+
+    steps:
+      - name: Set up repo
+        uses: actions/checkout@v2
+
+      - run: apk add gcc libseccomp-dev
+      - run: apk add libseccomp-static
+        if: matrix.os == 'alpine:edge'
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+
+      - name: Export compilation flags
+        run: 'echo "RUSTFLAGS=-L /usr/lib" >>$GITHUB_ENV'
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: build
+          args: --verbose --target ${{ matrix.target }} --features "${{ matrix.features }}"
+
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: test
+          args: --verbose --target ${{ matrix.target }} --features "${{ matrix.features }}"
+
+  coverage-tarpaulin-ubuntu:
     name: Tarpaulin
 
     strategy:
@@ -103,3 +173,4 @@ jobs:
           OS: ${{ matrix.os }}
           TARGET: ${{ matrix.target }}
           TOOLCHAIN: ${{ matrix.toolchain }}
+          FEATURES: ${{ matrix.features }}
