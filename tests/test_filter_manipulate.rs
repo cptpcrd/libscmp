@@ -1,4 +1,4 @@
-use libscmp::{resolve_syscall_name, Action, Arch, Arg, Filter};
+use libscmp::{resolve_syscall_name, Action, Arch, Arg, Filter, Flag};
 
 fn arch_nonnative() -> Arch {
     match Arch::native() {
@@ -44,6 +44,23 @@ fn test_badarch_action() {
     {
         filter.set_badarch_action(action).unwrap();
         assert_eq!(filter.get_badarch_action().unwrap(), action);
+    }
+}
+
+#[test]
+fn test_get_set_flags() {
+    let mut filter = Filter::new(Action::Allow).unwrap();
+
+    for flag in [Flag::NoNewPrivs, Flag::SysRawRC, Flag::Log]
+        .iter()
+        .copied()
+    {
+        let orig_val = filter.get_flag(flag).unwrap();
+
+        for val in [true, false, orig_val].iter().copied() {
+            filter.set_flag(flag, val).unwrap();
+            assert_eq!(filter.get_flag(flag).unwrap(), val);
+        }
     }
 }
 
