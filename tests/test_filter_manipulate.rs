@@ -7,18 +7,25 @@ fn arch_nonnative() -> Arch {
     }
 }
 
+#[cfg(feature = "libseccomp-2-4")]
+static ACTIONS: &[Action] = &[
+    Action::Allow,
+    Action::KillProcess,
+    Action::KillThread,
+    Action::Log,
+    Action::Errno(libc::EPERM),
+];
+
+#[cfg(not(feature = "libseccomp-2-4"))]
+static ACTIONS: &[Action] = &[
+    Action::Allow,
+    Action::KillThread,
+    Action::Errno(libc::EPERM),
+];
+
 #[test]
 fn test_default_action() {
-    for action in [
-        Action::Allow,
-        Action::KillProcess,
-        Action::KillThread,
-        Action::Log,
-        Action::Errno(libc::EPERM),
-    ]
-    .iter()
-    .copied()
-    {
+    for action in ACTIONS.iter().copied() {
         assert_eq!(
             Filter::new(action).unwrap().get_default_action().unwrap(),
             action
@@ -34,9 +41,7 @@ fn test_badarch_action() {
 
     for action in [
         Action::Allow,
-        Action::KillProcess,
         Action::KillThread,
-        Action::Log,
         Action::Errno(libc::EPERM),
     ]
     .iter()
@@ -145,7 +150,7 @@ fn test_bad_add_rule() {
     assert_eq!(
         filter
             .add_rule(
-                Action::KillProcess,
+                Action::KillThread,
                 resolve_syscall_name("setpriority").unwrap(),
                 &[Arg::new_eq(6, 0)]
             )

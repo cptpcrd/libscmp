@@ -90,10 +90,13 @@ extern "C" {
 
 pub const SCMP_ACT_MASK: u32 = 0xFFFF0000;
 
+#[cfg(feature = "libseccomp-2-4")]
 pub const SCMP_ACT_KILL_PROCESS: u32 = 0x80000000;
 pub const SCMP_ACT_KILL: u32 = 0x00000000;
 pub const SCMP_ACT_TRAP: u32 = 0x00030000;
+#[cfg(feature = "libseccomp-2-5")]
 pub const SCMP_ACT_NOTIFY: u32 = 0x7FC00000;
+#[cfg(feature = "libseccomp-2-4")]
 pub const SCMP_ACT_LOG: u32 = 0x7FFC0000;
 pub const SCMP_ACT_ALLOW: u32 = 0x7FFF0000;
 

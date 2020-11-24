@@ -12,23 +12,38 @@ pub use arch::{Arch, ParseArchError};
 /// matches.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Action {
+    /// Kill the entire process (only supported in libseccomp v2.4.0+)
+    #[cfg(feature = "libseccomp-2-4")]
     KillProcess,
+    /// Kill the calling thread
     KillThread,
+    /// Throw a SIGSYS signal
     Trap,
+    /// Notify userspace to allow further auditing of the syscall (only supported in libseccomp
+    /// v2.5.0+)
+    #[cfg(feature = "libseccomp-2-5")]
     Notify,
+    /// Log the action and allow the syscall to be executed (only supported in libseccomp v2.4.0+)
+    #[cfg(feature = "libseccomp-2-4")]
     Log,
+    /// ALlow the syscall to be executed
     Allow,
+    /// Return the specified error code
     Errno(libc::c_int),
+    /// Notify a tracing process with the specified value
     Trace(u16),
 }
 
 impl Action {
     fn to_raw(self) -> u32 {
         match self {
+            #[cfg(feature = "libseccomp-2-4")]
             Self::KillProcess => sys::SCMP_ACT_KILL_PROCESS,
             Self::KillThread => sys::SCMP_ACT_KILL,
             Self::Trap => sys::SCMP_ACT_TRAP,
+            #[cfg(feature = "libseccomp-2-5")]
             Self::Notify => sys::SCMP_ACT_NOTIFY,
+            #[cfg(feature = "libseccomp-2-4")]
             Self::Log => sys::SCMP_ACT_LOG,
             Self::Allow => sys::SCMP_ACT_ALLOW,
             Self::Errno(eno) => sys::SCMP_ACT_ERRNO(eno as u16),
@@ -38,10 +53,13 @@ impl Action {
 
     fn from_raw(val: u32) -> Option<Self> {
         match val & sys::SCMP_ACT_MASK {
+            #[cfg(feature = "libseccomp-2-4")]
             sys::SCMP_ACT_KILL_PROCESS => Some(Self::KillProcess),
             sys::SCMP_ACT_KILL => Some(Self::KillThread),
             sys::SCMP_ACT_TRAP => Some(Self::Trap),
+            #[cfg(feature = "libseccomp-2-5")]
             sys::SCMP_ACT_NOTIFY => Some(Self::Notify),
+            #[cfg(feature = "libseccomp-2-4")]
             sys::SCMP_ACT_LOG => Some(Self::Log),
             sys::SCMP_ACT_ALLOW => Some(Self::Allow),
             sys::SCMP_ACT_ERRNO_MASK => Some(Self::Errno(val as u16 as libc::c_int)),
