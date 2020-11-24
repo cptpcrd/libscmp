@@ -22,3 +22,6 @@ libseccomp-2-5 = ["libseccomp-2-4"]
 
 [dependencies]
 libc = "0.2"
+
+[package.metadata.docs.rs]
+all-features = true
