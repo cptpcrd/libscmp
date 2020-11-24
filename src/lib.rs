@@ -103,13 +103,18 @@ pub enum Flag {
     Tsync = sys::SCMP_FLTATR_CTL_TSYNC,
     /// Whether `libseccomp` should allow filter rules that target the -1 syscall (sometimes used
     /// by ptrace()rs to skip syscalls). Defaults to `false`.
+    #[cfg(feature = "libseccomp-2-4")]
     Tskip = sys::SCMP_FLTATR_API_TSKIP,
     /// Whether the kernel should log all non-"allow" actions taken (default `false`).
+    #[cfg(feature = "libseccomp-2-4")]
     Log = sys::SCMP_FLTATR_CTL_LOG,
     /// Whether to disable Speculative Store Bypass mitigation for this filter (default `false`).
+    /// Only supported on libseccomp v2.5.0+.
+    #[cfg(feature = "libseccomp-2-5")]
     DisableSSB = sys::SCMP_FLTATR_CTL_SSB,
     /// Whether `libseccomp` should pass system error codes back to the caller instead of returning
-    /// `ECANCELED` (default `false`).
+    /// `ECANCELED` (default `false`). Only supported on libseccomp v2.5.0+.
+    #[cfg(feature = "libseccomp-2-5")]
     SysRawRC = sys::SCMP_FLTATR_API_SYSRAWRC,
 }
 
@@ -409,6 +414,7 @@ impl Filter {
     /// Get the current optimization level of the filter.
     ///
     /// See seccomp_attr_get(3) for more information.
+    #[cfg(feature = "libseccomp-2-5")]
     #[inline]
     pub fn get_optimize_level(&mut self) -> io::Result<u32> {
         self.get_attr(sys::SCMP_FLTATR_CTL_OPTIMIZE)
@@ -417,6 +423,7 @@ impl Filter {
     /// Set the optimization level of the filter.
     ///
     /// See seccomp_attr_get(3) for more information.
+    #[cfg(feature = "libseccomp-2-5")]
     #[inline]
     pub fn set_optimize_level(&mut self, level: u32) -> io::Result<()> {
         self.set_attr(sys::SCMP_FLTATR_CTL_OPTIMIZE, level)

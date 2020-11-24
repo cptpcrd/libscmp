@@ -52,14 +52,20 @@ fn test_badarch_action() {
     }
 }
 
+#[cfg(feature = "libseccomp-2-5")]
+static FLAGS: &[Flag] = &[Flag::NoNewPrivs, Flag::Log, Flag::SysRawRC];
+
+#[cfg(all(feature = "libseccomp-2-4", not(feature = "libseccomp-2-5")))]
+static FLAGS: &[Flag] = &[Flag::NoNewPrivs, Flag::Log];
+
+#[cfg(not(feature = "libseccomp-2-4"))]
+static FLAGS: &[Flag] = &[Flag::NoNewPrivs];
+
 #[test]
 fn test_get_set_flags() {
     let mut filter = Filter::new(Action::Allow).unwrap();
 
-    for flag in [Flag::NoNewPrivs, Flag::SysRawRC, Flag::Log]
-        .iter()
-        .copied()
-    {
+    for flag in FLAGS.iter().copied() {
         let orig_val = filter.get_flag(flag).unwrap();
 
         for val in [true, false, orig_val].iter().copied() {
