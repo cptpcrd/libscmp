@@ -274,4 +274,13 @@ mod tests {
             assert!(!arch.is_supported());
         }
     }
+
+    #[test]
+    fn test_get_arch() {
+        for &arch in ALL_ARCHES {
+            assert_eq!(Arch::get_arch(arch as u32), Some(arch));
+        }
+
+        assert_eq!(Arch::get_arch(Arch::NATIVE as u32), None);
+    }
 }
