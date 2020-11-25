@@ -120,8 +120,8 @@ impl Arg {
     /// Create a syscall argument comparison given the argument number, comparison operator, and
     /// two data arguments.
     ///
-    /// For example, `Arg::new(1, Cmp::EQ, 2, 0)` is equivalent to `Arg::new_eq(1, 2)`, and
-    /// `Arg::new(0, Cmp::MASKED_EQ, 1, 2)` is equivalent to `Arg::new_masked_eq(0, 1, 2)`.
+    /// For example, `Arg::new(1, Cmp::Eq, 2, 0)` is equivalent to `Arg::new_eq(1, 2)`, and
+    /// `Arg::new(0, Cmp::MaskedEq, 1, 2)` is equivalent to `Arg::new_masked_eq(0, 1, 2)`.
     #[inline]
     pub fn new(arg: libc::c_uint, op: Cmp, data_a: u64, data_b: u64) -> Self {
         Self {
