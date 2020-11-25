@@ -18,6 +18,36 @@ pub struct scmp_version {
     pub micro: libc::c_uint,
 }
 
+#[cfg(feature = "libseccomp-2-5")]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[repr(C)]
+pub struct seccomp_data {
+    pub nr: libc::c_int,
+    pub arch: u32,
+    pub instruction_pointer: u64,
+    pub args: [u64; 6],
+}
+
+#[cfg(feature = "libseccomp-2-5")]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[repr(C)]
+pub struct seccomp_notif {
+    pub id: u64,
+    pub pid: u32,
+    pub flags: u32,
+    pub data: seccomp_data,
+}
+
+#[cfg(feature = "libseccomp-2-5")]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[repr(C)]
+pub struct seccomp_notif_resp {
+    pub id: u64,
+    pub val: i64,
+    pub error: i32,
+    pub flags: u32,
+}
+
 pub const SCMP_CMP_NE: libc::c_int = 1;
 pub const SCMP_CMP_LT: libc::c_int = 2;
 pub const SCMP_CMP_LE: libc::c_int = 3;
@@ -86,6 +116,21 @@ extern "C" {
     pub fn seccomp_api_get() -> libc::c_uint;
     #[cfg(feature = "libseccomp-2-4")]
     pub fn seccomp_api_set(level: libc::c_uint) -> libc::c_int;
+}
+
+#[cfg(feature = "libseccomp-2-5")]
+extern "C" {
+    pub fn seccomp_notify_alloc(
+        req: *mut *mut seccomp_notif,
+        resp: *mut *mut seccomp_notif_resp,
+    ) -> libc::c_int;
+    pub fn seccomp_notify_free(req: *mut seccomp_notif, resp: *mut seccomp_notif_resp);
+
+    pub fn seccomp_notify_receive(fd: libc::c_int, req: *mut seccomp_notif) -> libc::c_int;
+    pub fn seccomp_notify_respond(fd: libc::c_int, resp: *mut seccomp_notif_resp) -> libc::c_int;
+
+    pub fn seccomp_notify_id_valid(fd: libc::c_int, id: u64) -> libc::c_int;
+    pub fn seccomp_notify_fd(ctx: *const libc::c_void) -> libc::c_int;
 }
 
 pub const SCMP_ACT_MASK: u32 = 0xFFFF0000;

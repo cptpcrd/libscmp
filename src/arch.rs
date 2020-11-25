@@ -115,15 +115,6 @@ impl Arch {
     ///
     /// This returns the `Arch` variant that corresponds to the system architecture (it will NEVER
     /// return `Arch::NATIVE`).
-    #[cfg_attr(
-        any(
-            target_arch = "arm",
-            et_arch = "aarch64",
-            target_arch = "x86",
-            target_arch = "x86_64"
-        ),
-        inline
-    )]
     pub fn native() -> Self {
         // For common architectures, do detection at compile time and avoid calling into libseccomp
 
@@ -136,18 +127,20 @@ impl Arch {
         } else if cfg!(target_arch = "x86_64") {
             Self::X86_64
         } else {
-            let arch_raw = unsafe { sys::seccomp_arch_native() };
-
-            for arch in ALL_ARCHES.iter().cloned() {
-                if arch as u32 == arch_raw {
-                    return arch;
-                }
-            }
-
-            // It's unlikely, but newer versions of libseccomp might support architectures we don't
-            // know about.
-            panic!("Unrecognized architecture returned from libseccomp");
+            Self::get_arch(unsafe { sys::seccomp_arch_native() })
+                .expect("Unrecognized architecture returned from libseccomp")
         }
+    }
+
+    #[inline]
+    pub(crate) fn get_arch(arch_raw: u32) -> Option<Self> {
+        for arch in ALL_ARCHES.iter().cloned() {
+            if arch as u32 == arch_raw {
+                return Some(arch);
+            }
+        }
+
+        None
     }
 }
 

@@ -34,6 +34,11 @@ mod sys;
 
 pub use arch::{Arch, ParseArchError};
 
+#[cfg(feature = "libseccomp-2-5")]
+mod notify;
+#[cfg(feature = "libseccomp-2-5")]
+pub use notify::{notify_id_valid, Notification, NotificationResponse};
+
 /// Specifies an action to be taken, either as the default action for a filter or when a rule
 /// matches.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -443,6 +448,36 @@ impl Filter {
     #[inline]
     pub fn set_optimize_level(&mut self, level: u32) -> io::Result<()> {
         self.set_attr(sys::SCMP_FLTATR_CTL_OPTIMIZE, level)
+    }
+
+    /// Get the notification file descriptor of the filter after it has been loaded.
+    ///
+    /// Note: This is only available with the `libseccomp-2-5` feature.
+    #[cfg(feature = "libseccomp-2-5")]
+    pub fn get_notify_fd(&self) -> io::Result<RawFd> {
+        let fd = unsafe { sys::seccomp_notify_fd(self.ctx.as_ptr()) };
+
+        if fd < 0 {
+            Err(io::Error::from_raw_os_error(-fd))
+        } else {
+            Ok(fd)
+        }
+    }
+
+    /// Receive a seccomp notification from the notification file descriptor of this filter.
+    ///
+    /// Note: This is only available with the `libseccomp-2-5` feature.
+    #[cfg(feature = "libseccomp-2-5")]
+    pub fn receive_notify(&self) -> io::Result<Notification> {
+        Notification::receive(self.get_notify_fd()?)
+    }
+
+    /// Send a seccomp notification response along the notification file descriptor of this filter.
+    ///
+    /// Note: This is only available with the `libseccomp-2-5` feature.
+    #[cfg(feature = "libseccomp-2-5")]
+    pub fn respond_notify(&self, response: &mut NotificationResponse) -> io::Result<()> {
+        response.send_response(self.get_notify_fd()?)
     }
 }
 
