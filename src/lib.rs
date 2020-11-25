@@ -1,3 +1,29 @@
+//! `libscmp` provides a friendly wrapper over the `libseccomp` C library.
+//!
+//! Here's a simple example:
+//!
+//! ```
+//! use libscmp::{Filter, Action, Arg, resolve_syscall_name};
+//!
+//! // Allow all syscalls by default
+//! let mut filter = Filter::new(Action::Allow).unwrap();
+//!
+//! // Block `setpriority(PRIO_PROCESS, ...)`
+//! filter
+//!     .add_rule_exact(
+//!         Action::Errno(libc::EPERM),
+//!         resolve_syscall_name("setpriority").unwrap(),
+//!         &[Arg::new_eq(0, libc::PRIO_PROCESS as u64)],
+//!     )
+//!     .unwrap();
+//!
+//! // Load the filter into the kernel
+//! filter.load().unwrap();
+//!
+//! // Now `setpriority(PRIO_PROCESS, 0, 0)` should fail
+//! assert_eq!(unsafe { libc::setpriority(libc::PRIO_PROCESS, 0, 0) }, -1);
+//! assert_eq!(std::io::Error::last_os_error().raw_os_error(), Some(libc::EPERM));
+//! ```
 use std::ffi::{CStr, CString, OsStr, OsString};
 use std::io;
 use std::os::unix::prelude::*;
