@@ -76,6 +76,21 @@ fn test_get_set_flags() {
 }
 
 #[test]
+fn test_optimize_level() {
+    if libscmp::libseccomp_version() >= (2, 5, 0) {
+        let mut filter = Filter::new(Action::Allow).unwrap();
+
+        assert_eq!(filter.get_optimize_level().unwrap(), 1);
+
+        filter.set_optimize_level(2).unwrap();
+        assert_eq!(filter.get_optimize_level().unwrap(), 2);
+
+        filter.set_optimize_level(1).unwrap();
+        assert_eq!(filter.get_optimize_level().unwrap(), 1);
+    }
+}
+
+#[test]
 fn test_has_arches() {
     let filter = Filter::new(Action::Allow).unwrap();
 
