@@ -7,25 +7,25 @@ fn arch_nonnative() -> Arch {
     }
 }
 
-#[cfg(feature = "libseccomp-2-4")]
-static ACTIONS: &[Action] = &[
-    Action::Allow,
-    Action::KillProcess,
-    Action::KillThread,
-    Action::Log,
-    Action::Errno(libc::EPERM),
-];
-
-#[cfg(not(feature = "libseccomp-2-4"))]
-static ACTIONS: &[Action] = &[
-    Action::Allow,
-    Action::KillThread,
-    Action::Errno(libc::EPERM),
-];
-
 #[test]
 fn test_default_action() {
-    for action in ACTIONS.iter().copied() {
+    let actions = if libscmp::libseccomp_version() >= (2, 4, 0) {
+        &[
+            Action::Allow,
+            Action::KillProcess,
+            Action::KillThread,
+            Action::Log,
+            Action::Errno(libc::EPERM),
+        ][..]
+    } else {
+        &[
+            Action::Allow,
+            Action::KillThread,
+            Action::Errno(libc::EPERM),
+        ][..]
+    };
+
+    for action in actions.iter().copied() {
         assert_eq!(
             Filter::new(action).unwrap().get_default_action().unwrap(),
             action
@@ -52,20 +52,21 @@ fn test_badarch_action() {
     }
 }
 
-#[cfg(feature = "libseccomp-2-5")]
-static FLAGS: &[Flag] = &[Flag::NoNewPrivs, Flag::Log, Flag::SysRawRC];
-
-#[cfg(all(feature = "libseccomp-2-4", not(feature = "libseccomp-2-5")))]
-static FLAGS: &[Flag] = &[Flag::NoNewPrivs, Flag::Log];
-
-#[cfg(not(feature = "libseccomp-2-4"))]
-static FLAGS: &[Flag] = &[Flag::NoNewPrivs];
-
 #[test]
 fn test_get_set_flags() {
     let mut filter = Filter::new(Action::Allow).unwrap();
 
-    for flag in FLAGS.iter().copied() {
+    let version = libscmp::libseccomp_version();
+
+    let flags = if version >= (2, 5, 0) {
+        &[Flag::NoNewPrivs, Flag::Log, Flag::SysRawRC][..]
+    } else if version >= (2, 4, 0) {
+        &[Flag::NoNewPrivs, Flag::Log][..]
+    } else {
+        &[Flag::NoNewPrivs][..]
+    };
+
+    for flag in flags.iter().copied() {
         let orig_val = filter.get_flag(flag).unwrap();
 
         for val in [true, false, orig_val].iter().copied() {
