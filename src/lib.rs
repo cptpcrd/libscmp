@@ -620,6 +620,14 @@ mod tests {
     }
 
     #[test]
+    fn test_action_from_raw() {
+        assert_eq!(
+            Action::from_raw(sys::SCMP_ACT_KILL_PROCESS | sys::SCMP_ACT_ALLOW),
+            None
+        );
+    }
+
+    #[test]
     fn test_resolve_syscall() {
         assert_eq!(
             resolve_syscall_num(Arch::NATIVE, resolve_syscall_name("read").unwrap()).unwrap(),
