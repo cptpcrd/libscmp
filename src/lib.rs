@@ -135,6 +135,10 @@ pub enum Flag {
     DisableSSB = sys::SCMP_FLTATR_CTL_SSB,
     /// Whether `libseccomp` should pass system error codes back to the caller instead of returning
     /// `ECANCELED` (default `false`). Only supported on libseccomp v2.5.0+.
+    ///
+    /// Note: Use of this option is not reccommended. The [`Error`] struct already specially checks
+    /// for `ECANCELED` and retrieves the value of `errno` in that case; enabling this option will
+    /// simply make the returned errors more confusing.
     SysRawRC = sys::SCMP_FLTATR_API_SYSRAWRC,
 }
 

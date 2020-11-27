@@ -3,6 +3,16 @@ use std::fmt;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// Represents an error that could occur when interacting with `libseccomp`.
+///
+/// If the `libseccomp` function returns `-ECANCELED`, then [`code()`] will give the value of
+/// `errno` immediately after the call, and [`is_system()`] will return `true`.
+///
+/// Otherwise, [`code()`] will give the error code returned by `libseccomp`, and [`is_system()`]
+/// will return `false`.
+///
+/// [`code()`]: ./fn.code.html
+/// [`is_system()`]: ./fn.is_system.html
 #[derive(Clone)]
 pub struct Error {
     code: i32,
@@ -47,12 +57,15 @@ impl Error {
         }
     }
 
+    /// Returns the raw OS error code (i.e. an `errno` value).
     #[inline]
     pub fn code(&self) -> i32 {
         self.code
     }
 
     /// Returns whether this is a system error instead of a libseccomp error.
+    ///
+    /// (i.e. if this function returns `true` then a `libseccomp` function returned `-ECANCELED`.)
     #[inline]
     pub fn is_system(&self) -> bool {
         self.is_errno
