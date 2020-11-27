@@ -25,14 +25,15 @@
 //! assert_eq!(std::io::Error::last_os_error().raw_os_error(), Some(libc::EPERM));
 //! ```
 use std::ffi::{CStr, CString, OsStr, OsString};
-use std::io;
 use std::os::unix::prelude::*;
 use std::ptr::NonNull;
 
 mod arch;
+mod err;
 mod sys;
 
 pub use arch::{Arch, ParseArchError};
+pub use err::{Error, Result};
 
 #[cfg(feature = "libseccomp-2-5")]
 mod notify;
@@ -237,33 +238,37 @@ pub struct Filter {
 impl Filter {
     /// Create a new seccomp filter with the given default action.
     #[inline]
-    pub fn new(def_action: Action) -> io::Result<Self> {
+    pub fn new(def_action: Action) -> Result<Self> {
         match NonNull::new(unsafe { sys::seccomp_init(def_action.to_raw()) }) {
             Some(ctx) => Ok(Self { ctx }),
-            None => Err(io::Error::from_raw_os_error(libc::EINVAL)),
+            None => Err(Error::new(libc::EINVAL)),
         }
     }
 
     /// Re-initialize this seccomp filter with the given default action.
     #[inline]
-    pub fn reset(&mut self, def_action: Action) -> io::Result<()> {
-        check_status(unsafe { sys::seccomp_reset(self.ctx.as_ptr(), def_action.to_raw()) })
+    pub fn reset(&mut self, def_action: Action) -> Result<()> {
+        Error::unpack(unsafe { sys::seccomp_reset(self.ctx.as_ptr(), def_action.to_raw()) })?;
+
+        Ok(())
     }
 
     /// Merge another seccomp filter into this one.
     ///
     /// See seccomp_merge(3) for more details.
     #[inline]
-    pub fn merge(&mut self, other: Self) -> io::Result<()> {
-        check_status(unsafe { sys::seccomp_merge(self.ctx.as_ptr(), other.ctx.as_ptr()) })?;
+    pub fn merge(&mut self, other: Self) -> Result<()> {
+        Error::unpack(unsafe { sys::seccomp_merge(self.ctx.as_ptr(), other.ctx.as_ptr()) })?;
         std::mem::forget(other);
         Ok(())
     }
 
     /// Load the syscall filter rules into the kernel.
     #[inline]
-    pub fn load(&mut self) -> io::Result<()> {
-        check_status(unsafe { sys::seccomp_load(self.ctx.as_ptr()) })
+    pub fn load(&mut self) -> Result<()> {
+        Error::unpack(unsafe { sys::seccomp_load(self.ctx.as_ptr()) })?;
+
+        Ok(())
     }
 
     /// Export this filter as BPF (Berkeley Packet Filter) code to the file with the specified file
@@ -271,8 +276,10 @@ impl Filter {
     ///
     /// See seccomp_export_bpf(3) for more details.
     #[inline]
-    pub fn export_bpf(&self, fd: RawFd) -> io::Result<()> {
-        check_status(unsafe { sys::seccomp_export_bpf(self.ctx.as_ptr(), fd) })
+    pub fn export_bpf(&self, fd: RawFd) -> Result<()> {
+        Error::unpack(unsafe { sys::seccomp_export_bpf(self.ctx.as_ptr(), fd) })?;
+
+        Ok(())
     }
 
     /// Export this filter as PFC (Pseudo Filter Code) code to the file with the specified file
@@ -280,44 +287,43 @@ impl Filter {
     ///
     /// See seccomp_export_pfc(3) for more details.
     #[inline]
-    pub fn export_pfc(&self, fd: RawFd) -> io::Result<()> {
-        check_status(unsafe { sys::seccomp_export_pfc(self.ctx.as_ptr(), fd) })
+    pub fn export_pfc(&self, fd: RawFd) -> Result<()> {
+        Error::unpack(unsafe { sys::seccomp_export_pfc(self.ctx.as_ptr(), fd) })?;
+
+        Ok(())
     }
 
     /// Add the given architecture to the filter,
     ///
     /// See seccomp_arch_add(3) for details.
     #[inline]
-    pub fn add_arch(&mut self, arch: Arch) -> io::Result<()> {
-        check_status(unsafe { sys::seccomp_arch_add(self.ctx.as_ptr(), arch as u32) })
+    pub fn add_arch(&mut self, arch: Arch) -> Result<()> {
+        Error::unpack(unsafe { sys::seccomp_arch_add(self.ctx.as_ptr(), arch as u32) })?;
+
+        Ok(())
     }
 
     /// Remove the given architecture from the filter,
     ///
     /// See seccomp_arch_remove(3) for details.
     #[inline]
-    pub fn remove_arch(&mut self, arch: Arch) -> io::Result<()> {
-        match -unsafe { sys::seccomp_arch_remove(self.ctx.as_ptr(), arch as u32) } {
-            0 => Ok(()),
-            libc::EEXIST => Err(io::Error::from_raw_os_error(libc::ENOENT)),
-            ret => {
-                debug_assert!(ret > 0);
-                Err(io::Error::from_raw_os_error(ret))
-            }
-        }
+    pub fn remove_arch(&mut self, arch: Arch) -> Result<()> {
+        Error::unpack_enoent(unsafe { sys::seccomp_arch_remove(self.ctx.as_ptr(), arch as u32) })?;
+
+        Ok(())
     }
 
     /// Check if the given architecture has been added to the filter.
     ///
     /// See seccomp_arch_exist(3) for details.
-    pub fn has_arch(&self, arch: Arch) -> io::Result<bool> {
-        match -unsafe { sys::seccomp_arch_exist(self.ctx.as_ptr(), arch as u32) } {
-            0 => Ok(true),
-            libc::EEXIST => Ok(false),
-            ret => {
-                debug_assert!(ret > 0);
-                Err(io::Error::from_raw_os_error(ret))
-            }
+    pub fn has_arch(&self, arch: Arch) -> Result<bool> {
+        let res = unsafe { sys::seccomp_arch_exist(self.ctx.as_ptr(), arch as u32) };
+
+        if res == -libc::EEXIST {
+            Ok(false)
+        } else {
+            Error::unpack(res)?;
+            Ok(true)
         }
     }
 
@@ -329,8 +335,12 @@ impl Filter {
     ///
     /// See seccomp_syscall_priority(3) for details.
     #[inline]
-    pub fn syscall_priority(&mut self, syscall: libc::c_int, priority: u8) -> io::Result<()> {
-        check_status(unsafe { sys::seccomp_syscall_priority(self.ctx.as_ptr(), syscall, priority) })
+    pub fn syscall_priority(&mut self, syscall: libc::c_int, priority: u8) -> Result<()> {
+        Error::unpack(unsafe {
+            sys::seccomp_syscall_priority(self.ctx.as_ptr(), syscall, priority)
+        })?;
+
+        Ok(())
     }
 
     /// Add a new rule to this filter.
@@ -342,13 +352,8 @@ impl Filter {
     /// This function may alter the rule slightly depending on architecture-specific semantics. To add the
     /// rule with no changes, see [`add_rule_exact()`](#method.add_rule_exact).
     #[inline]
-    pub fn add_rule(
-        &mut self,
-        action: Action,
-        syscall: libc::c_int,
-        args: &[Arg],
-    ) -> io::Result<()> {
-        check_status(unsafe {
+    pub fn add_rule(&mut self, action: Action, syscall: libc::c_int, args: &[Arg]) -> Result<()> {
+        Error::unpack(unsafe {
             sys::seccomp_rule_add_array(
                 self.ctx.as_ptr(),
                 action.to_raw(),
@@ -356,7 +361,9 @@ impl Filter {
                 args.len() as libc::c_uint,
                 args.as_ptr() as *const sys::scmp_arg_cmp,
             )
-        })
+        })?;
+
+        Ok(())
     }
 
     /// Add a new rule to this filter, without any per-architecture modifications.
@@ -369,8 +376,8 @@ impl Filter {
         action: Action,
         syscall: libc::c_int,
         args: &[Arg],
-    ) -> io::Result<()> {
-        check_status(unsafe {
+    ) -> Result<()> {
+        Error::unpack(unsafe {
             sys::seccomp_rule_add_exact_array(
                 self.ctx.as_ptr(),
                 action.to_raw(),
@@ -378,39 +385,42 @@ impl Filter {
                 args.len() as libc::c_uint,
                 args.as_ptr() as *const sys::scmp_arg_cmp,
             )
-        })
+        })?;
+
+        Ok(())
     }
 
     #[inline]
-    fn get_attr(&mut self, attr: libc::c_int) -> io::Result<u32> {
+    fn get_attr(&mut self, attr: libc::c_int) -> Result<u32> {
         let mut res = 0;
-        check_status(unsafe { sys::seccomp_attr_get(self.ctx.as_ptr(), attr, &mut res) })?;
+        Error::unpack_enoent(unsafe { sys::seccomp_attr_get(self.ctx.as_ptr(), attr, &mut res) })?;
         Ok(res)
     }
 
     #[inline]
-    fn set_attr(&mut self, attr: libc::c_int, value: u32) -> io::Result<()> {
-        check_status(unsafe { sys::seccomp_attr_set(self.ctx.as_ptr(), attr, value) })
+    fn set_attr(&mut self, attr: libc::c_int, value: u32) -> Result<()> {
+        Error::unpack_enoent(unsafe { sys::seccomp_attr_set(self.ctx.as_ptr(), attr, value) })?;
+        Ok(())
     }
 
     /// Get the default filter action (as set when the filter was created or reset).
     #[inline]
-    pub fn get_default_action(&mut self) -> io::Result<Action> {
+    pub fn get_default_action(&mut self) -> Result<Action> {
         Action::from_raw(self.get_attr(sys::SCMP_FLTATR_ACT_DEFAULT)?)
-            .ok_or_else(|| io::Error::from_raw_os_error(libc::EINVAL))
+            .ok_or_else(|| Error::new(libc::EINVAL))
     }
 
     /// Get the action taken when the loaded filter does not match the application's architecture
     /// (defaults to `KillThread`).
     #[inline]
-    pub fn get_badarch_action(&mut self) -> io::Result<Action> {
+    pub fn get_badarch_action(&mut self) -> Result<Action> {
         Action::from_raw(self.get_attr(sys::SCMP_FLTATR_ACT_BADARCH)?)
-            .ok_or_else(|| io::Error::from_raw_os_error(libc::EINVAL))
+            .ok_or_else(|| Error::new(libc::EINVAL))
     }
 
     /// Set the action taken when the loaded filter does not match the application's architecture.
     #[inline]
-    pub fn set_badarch_action(&mut self, act: Action) -> io::Result<()> {
+    pub fn set_badarch_action(&mut self, act: Action) -> Result<()> {
         self.set_attr(sys::SCMP_FLTATR_ACT_BADARCH, act.to_raw())
     }
 
@@ -418,7 +428,7 @@ impl Filter {
     ///
     /// See [`Flag`](./enum.Flag.html) for more details.
     #[inline]
-    pub fn get_flag(&mut self, flag: Flag) -> io::Result<bool> {
+    pub fn get_flag(&mut self, flag: Flag) -> Result<bool> {
         Ok(self.get_attr(flag as libc::c_int)? != 0)
     }
 
@@ -426,7 +436,7 @@ impl Filter {
     ///
     /// See [`Flag`](./enum.Flag.html) for more details.
     #[inline]
-    pub fn set_flag(&mut self, flag: Flag, val: bool) -> io::Result<()> {
+    pub fn set_flag(&mut self, flag: Flag, val: bool) -> Result<()> {
         self.set_attr(flag as libc::c_int, val as u32)
     }
 
@@ -436,7 +446,7 @@ impl Filter {
     ///
     /// Note: This only works on libseccomp v2.5.0+.
     #[inline]
-    pub fn get_optimize_level(&mut self) -> io::Result<u32> {
+    pub fn get_optimize_level(&mut self) -> Result<u32> {
         self.get_attr(sys::SCMP_FLTATR_CTL_OPTIMIZE)
     }
 
@@ -446,7 +456,7 @@ impl Filter {
     ///
     /// Note: This only works on libseccomp v2.5.0+.
     #[inline]
-    pub fn set_optimize_level(&mut self, level: u32) -> io::Result<()> {
+    pub fn set_optimize_level(&mut self, level: u32) -> Result<()> {
         self.set_attr(sys::SCMP_FLTATR_CTL_OPTIMIZE, level)
     }
 
@@ -454,21 +464,15 @@ impl Filter {
     ///
     /// Note: This is only available with the `libseccomp-2-5` feature.
     #[cfg(feature = "libseccomp-2-5")]
-    pub fn get_notify_fd(&self) -> io::Result<RawFd> {
-        let fd = unsafe { sys::seccomp_notify_fd(self.ctx.as_ptr()) };
-
-        if fd < 0 {
-            Err(io::Error::from_raw_os_error(-fd))
-        } else {
-            Ok(fd)
-        }
+    pub fn get_notify_fd(&self) -> Result<RawFd> {
+        Error::unpack(unsafe { sys::seccomp_notify_fd(self.ctx.as_ptr()) })
     }
 
     /// Receive a seccomp notification from the notification file descriptor of this filter.
     ///
     /// Note: This is only available with the `libseccomp-2-5` feature.
     #[cfg(feature = "libseccomp-2-5")]
-    pub fn receive_notify(&self) -> io::Result<Notification> {
+    pub fn receive_notify(&self) -> Result<Notification> {
         Notification::receive(self.get_notify_fd()?)
     }
 
@@ -476,7 +480,7 @@ impl Filter {
     ///
     /// Note: This is only available with the `libseccomp-2-5` feature.
     #[cfg(feature = "libseccomp-2-5")]
-    pub fn respond_notify(&self, response: &mut NotificationResponse) -> io::Result<()> {
+    pub fn respond_notify(&self, response: &mut NotificationResponse) -> Result<()> {
         response.send_response(self.get_notify_fd()?)
     }
 }
@@ -487,15 +491,6 @@ impl Drop for Filter {
         unsafe {
             sys::seccomp_release(self.ctx.as_ptr());
         }
-    }
-}
-
-fn check_status(ret: libc::c_int) -> io::Result<()> {
-    if ret == 0 {
-        Ok(())
-    } else {
-        debug_assert!(ret < 0);
-        Err(io::Error::from_raw_os_error(-ret))
     }
 }
 
@@ -574,8 +569,9 @@ pub fn api_get() -> libc::c_uint {
 /// Note: This is only available with the `libseccomp-2-4` feature.
 #[cfg(feature = "libseccomp-2-4")]
 #[inline]
-pub fn api_set(level: libc::c_uint) -> io::Result<()> {
-    check_status(unsafe { sys::seccomp_api_set(level) })
+pub fn api_set(level: libc::c_uint) -> Result<()> {
+    Error::unpack(unsafe { sys::seccomp_api_set(level) })?;
+    Ok(())
 }
 
 /// Get the version of the currently loaded `libseccomp` library.
@@ -593,8 +589,9 @@ pub fn libseccomp_version() -> (libc::c_uint, libc::c_uint, libc::c_uint) {
 ///
 /// See seccomp_reset(3) for more details (specifically, the description of what happens if the
 /// specified filter is NULL).
-pub fn reset_global_state() -> io::Result<()> {
-    check_status(unsafe { sys::seccomp_reset(std::ptr::null_mut(), 0) })
+pub fn reset_global_state() -> Result<()> {
+    Error::unpack(unsafe { sys::seccomp_reset(std::ptr::null_mut(), 0) })?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -638,15 +635,6 @@ mod tests {
         assert_eq!(
             resolve_syscall_name_rewrite(Arch::X86, "socketcall").unwrap(),
             resolve_syscall_name_rewrite(Arch::X86, "socket").unwrap(),
-        );
-    }
-
-    #[test]
-    fn test_check_status() {
-        check_status(0).unwrap();
-        assert_eq!(
-            check_status(-libc::EEXIST).unwrap_err().raw_os_error(),
-            Some(libc::EEXIST)
         );
     }
 

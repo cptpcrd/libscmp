@@ -112,22 +112,16 @@ fn test_add_remove_arches() {
     assert!(filter.has_arch(arch_nonnative()).unwrap());
 
     assert_eq!(
-        filter.remove_arch(Arch::NATIVE).unwrap_err().raw_os_error(),
-        Some(libc::ENOENT)
+        filter.remove_arch(Arch::NATIVE).unwrap_err().code(),
+        libc::ENOENT
     );
     assert_eq!(
-        filter
-            .remove_arch(Arch::native())
-            .unwrap_err()
-            .raw_os_error(),
-        Some(libc::ENOENT)
+        filter.remove_arch(Arch::native()).unwrap_err().code(),
+        libc::ENOENT
     );
     assert_eq!(
-        filter
-            .add_arch(arch_nonnative())
-            .unwrap_err()
-            .raw_os_error(),
-        Some(libc::EEXIST)
+        filter.add_arch(arch_nonnative()).unwrap_err().code(),
+        libc::EEXIST
     );
 }
 
@@ -158,8 +152,8 @@ fn test_syscall_priority() {
         .unwrap();
 
     assert_eq!(
-        filter.syscall_priority(-1, 255).unwrap_err().raw_os_error(),
-        Some(libc::EINVAL)
+        filter.syscall_priority(-1, 255).unwrap_err().code(),
+        libc::EINVAL
     );
 }
 
@@ -177,8 +171,8 @@ fn test_bad_add_rule() {
                 &[Arg::new_eq(6, 0)]
             )
             .unwrap_err()
-            .raw_os_error(),
-        Some(libc::EINVAL)
+            .code(),
+        libc::EINVAL
     );
 }
 
@@ -190,7 +184,7 @@ fn test_bad_merge() {
         filter
             .merge(Filter::new(Action::Allow).unwrap())
             .unwrap_err()
-            .raw_os_error(),
-        Some(libc::EEXIST)
+            .code(),
+        libc::EEXIST
     );
 }

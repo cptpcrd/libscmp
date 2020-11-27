@@ -1,4 +1,3 @@
-use std::io;
 use std::os::unix::prelude::*;
 use std::ptr::NonNull;
 
@@ -25,7 +24,7 @@ pub struct Notification {
 
 impl Notification {
     /// Receive a seccomp notification from the given notification fd.
-    pub fn receive(fd: RawFd) -> io::Result<Self> {
+    pub fn receive(fd: RawFd) -> crate::Result<Self> {
         let mut res = Self::new();
         res.receive_into(fd)?;
         Ok(res)
@@ -78,8 +77,9 @@ impl Notification {
         unsafe { &self.req.as_ref().data.args }
     }
 
-    fn receive_into(&mut self, fd: RawFd) -> io::Result<()> {
-        crate::check_status(unsafe { sys::seccomp_notify_receive(fd, self.req.as_ptr()) })
+    fn receive_into(&mut self, fd: RawFd) -> crate::Result<()> {
+        crate::Error::unpack(unsafe { sys::seccomp_notify_receive(fd, self.req.as_ptr()) })?;
+        Ok(())
     }
 
     /// Check if the notification ID as returned by [`id()`] is still valid.
@@ -144,8 +144,9 @@ impl NotificationResponse {
     }
 
     /// Send a response along the given notification file descriptor.
-    pub fn send_response(&mut self, fd: RawFd) -> io::Result<()> {
-        crate::check_status(unsafe { sys::seccomp_notify_respond(fd, self.resp.as_ptr()) })
+    pub fn send_response(&mut self, fd: RawFd) -> crate::Result<()> {
+        crate::Error::unpack(unsafe { sys::seccomp_notify_respond(fd, self.resp.as_ptr()) })?;
+        Ok(())
     }
 }
 
