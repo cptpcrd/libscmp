@@ -52,6 +52,12 @@ impl Error {
         self.code
     }
 
+    /// Returns whether this is a system error instead of a libseccomp error.
+    #[inline]
+    pub fn is_system(&self) -> bool {
+        self.is_errno
+    }
+
     fn strerror(&self) -> &'static str {
         if !self.is_errno {
             match self.code {
