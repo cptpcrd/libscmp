@@ -3,6 +3,7 @@ use std::fmt;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[derive(Clone)]
 pub struct Error {
     code: i32,
     is_errno: bool,
@@ -115,5 +116,157 @@ impl From<Error> for std::io::Error {
 
             Self::new(kind, e.strerror())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn set_errno(eno: libc::c_int) {
+        unsafe {
+            *libc::__errno_location() = eno;
+        }
+    }
+
+    fn assert_same(err1: &Error, err2: &Error) {
+        assert_eq!(err1.code, err2.code);
+        assert_eq!(err1.is_errno, err2.is_errno);
+    }
+
+    #[test]
+    fn test_new() {
+        assert_same(
+            &Error::new(libc::ENOENT),
+            &Error {
+                code: libc::ENOENT,
+                is_errno: false,
+            },
+        );
+
+        set_errno(libc::EEXIST);
+        assert_same(
+            &Error::new(libc::ECANCELED),
+            &Error {
+                code: libc::EEXIST,
+                is_errno: true,
+            },
+        );
+    }
+
+    #[test]
+    fn test_unpack() {
+        assert_eq!(Error::unpack(0).unwrap(), 0);
+        assert_eq!(Error::unpack(1).unwrap(), 1);
+
+        assert_same(
+            &Error::unpack(-libc::ENOENT).unwrap_err(),
+            &Error {
+                code: libc::ENOENT,
+                is_errno: false,
+            },
+        );
+
+        set_errno(libc::EEXIST);
+        assert_same(
+            &Error::unpack(-libc::ECANCELED).unwrap_err(),
+            &Error {
+                code: libc::EEXIST,
+                is_errno: true,
+            },
+        );
+    }
+
+    #[test]
+    fn test_debug() {
+        assert_eq!(
+            format!("{:?}", Error::new(libc::ENOENT)),
+            format!(
+                "Error {{ code: {}, is_system: false, message: \"Does not exist\" }}",
+                libc::ENOENT
+            )
+        );
+
+        set_errno(libc::ENOENT);
+        let err = Error::new(libc::ECANCELED);
+        assert_eq!(
+            format!("{:?}", err),
+            format!(
+                "Error {{ code: {}, is_system: true, message: \"{}\" }}",
+                libc::ENOENT,
+                err.strerror()
+            )
+        );
+    }
+
+    #[test]
+    fn test_display_and_into() {
+        use std::io;
+
+        for (eno, kind, msg) in [
+            (
+                libc::ENOENT,
+                io::ErrorKind::NotFound,
+                Some("Does not exist"),
+            ),
+            (
+                libc::EEXIST,
+                io::ErrorKind::AlreadyExists,
+                Some("Already exists"),
+            ),
+            (
+                libc::EINVAL,
+                io::ErrorKind::InvalidInput,
+                Some("Invalid argument"),
+            ),
+            (libc::EACCES, io::ErrorKind::PermissionDenied, None),
+            (libc::EPERM, io::ErrorKind::PermissionDenied, None),
+            (
+                libc::ESRCH,
+                io::ErrorKind::Other,
+                Some("Unable to load due to thread issues"),
+            ),
+            (
+                libc::EFAULT,
+                io::ErrorKind::Other,
+                Some("Internal libseccomp error"),
+            ),
+        ]
+        .iter()
+        {
+            let orig_err = Error::unpack(-eno).unwrap_err();
+
+            let io_err = io::Error::from(orig_err.clone());
+            assert_eq!(io_err.raw_os_error(), None);
+            assert_eq!(io_err.kind(), *kind);
+
+            if let Some(msg) = msg {
+                assert_eq!(io_err.to_string(), *msg);
+
+                assert_eq!(orig_err.strerror(), *msg);
+                assert_eq!(orig_err.to_string(), format!("{} (libseccomp error)", msg));
+
+                #[allow(deprecated)]
+                {
+                    use std::error::Error;
+                    assert_eq!(orig_err.description(), *msg);
+                }
+            }
+        }
+
+        set_errno(libc::ENOENT);
+        let orig_err = Error::unpack(-libc::ECANCELED).unwrap_err();
+        assert_eq!(
+            orig_err.to_string(),
+            format!(
+                "{} (system error, code {})",
+                orig_err.strerror(),
+                libc::ENOENT
+            )
+        );
+
+        let io_err = io::Error::from(orig_err);
+        assert_eq!(io_err.raw_os_error(), Some(libc::ENOENT));
+        assert_eq!(io_err.raw_os_error(), Some(libc::ENOENT));
     }
 }
