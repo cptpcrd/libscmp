@@ -70,36 +70,25 @@ impl Arch {
     /// This probes the currently loaded `libseccomp` to determine whether it supports architectures
     /// that were only added in recent versions of `libseccomp`.
     pub fn all() -> &'static [Self] {
-        let mut end;
+        // parisc and parisc64 are not supported on libseccomp<2.4.0
+        if !cfg!(feature = "libseccomp-2-4") && !Arch::PARISC64.is_supported() {
+            // We weren't told we'll be running on v2.4.0+, and parisc64 isn't supported.
 
-        if cfg!(feature = "libseccomp-2-5") {
-            // Assume all architectures up through and including riscv64 are supported
-            end = 19;
-        } else if cfg!(feature = "libseccomp-2-4") {
-            // Assume all architectures up through and including parisc (but not necessarily
-            // riscv64) are supported
+            // parisc shouldn't be supported either
+            debug_assert!(!Arch::PARISC.is_supported());
 
-            end = 18;
-            debug_assert_eq!(ALL_ARCHES[end], Arch::RISCV64);
-        } else {
-            // Assume all architectures up through and including s390x (but not necessarily
-            // parisc/parisc64/riscv64) are supported
-
-            end = 16;
-            debug_assert_eq!(ALL_ARCHES[end], Arch::PARISC);
+            debug_assert_eq!(ALL_ARCHES[16], Arch::PARISC);
+            return &ALL_ARCHES[..16];
         }
 
-        // Sanity check: make sure the previous architecture is supported
-        debug_assert!(ALL_ARCHES[end - 1].is_supported());
-
-        loop {
-            match ALL_ARCHES.get(end) {
-                Some(arch) if arch.is_supported() => {
-                    end += 1;
-                }
-                _ => return &ALL_ARCHES[..end],
-            }
+        // riscv64 is not supported on libseccomp<2.5.0
+        if !cfg!(feature = "libseccomp-2-5") && !Arch::RISCV64.is_supported() {
+            // We weren't told we'll be running on v2.5.0+, and riscv64 isn't supported.
+            debug_assert_eq!(ALL_ARCHES[18], Arch::RISCV64);
+            return &ALL_ARCHES[..18];
         }
+
+        ALL_ARCHES
     }
 
     /// Returns whether the currently loaded libseccomp supports this architecture.
