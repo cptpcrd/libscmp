@@ -6,6 +6,7 @@ macro_rules! define_arch {
     ($($name:tt,)*) => {
         /// An architecture supported by `libseccomp`.
         #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+        #[non_exhaustive]
         #[repr(u32)]
         pub enum Arch {
             /// Represents the "native" architecture; i.e. the current system architecture.

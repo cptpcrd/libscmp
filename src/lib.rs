@@ -43,6 +43,7 @@ pub use notify::{notify_id_valid, Notification, NotificationResponse};
 /// Specifies an action to be taken, either as the default action for a filter or when a rule
 /// matches.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
 pub enum Action {
     /// Kill the entire process (only supported in libseccomp v2.4.0+)
     KillProcess,
@@ -98,6 +99,7 @@ impl Action {
 
 /// Represents a comparison type that can be used in an [`Arg`](./struct.Arg.html).
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
 #[repr(i32)]
 pub enum Cmp {
     Ne = sys::SCMP_CMP_NE,
@@ -111,6 +113,7 @@ pub enum Cmp {
 
 /// Represents a boolean flag that can be set on a filter.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
 #[repr(i32)]
 pub enum Flag {
     /// Whether `libseccomp` should enable the "no-new-privs" mechanism before loading the seccomp
