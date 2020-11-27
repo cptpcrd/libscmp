@@ -254,6 +254,7 @@ mod tests {
         .iter()
         {
             let orig_err = Error::unpack(-eno).unwrap_err();
+            assert!(!orig_err.is_system());
 
             let io_err = io::Error::from(orig_err.clone());
             assert_eq!(io_err.raw_os_error(), None);
@@ -275,6 +276,7 @@ mod tests {
 
         set_errno(libc::ENOENT);
         let orig_err = Error::unpack(-libc::ECANCELED).unwrap_err();
+        assert!(orig_err.is_system());
         assert_eq!(
             orig_err.to_string(),
             format!(
