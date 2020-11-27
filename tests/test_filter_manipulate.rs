@@ -7,25 +7,32 @@ fn arch_nonnative() -> Arch {
     }
 }
 
+fn get_actions() -> Vec<Action> {
+    let mut actions = vec![
+        Action::Allow,
+        Action::KillThread,
+        Action::Errno(libc::EPERM),
+        Action::Trap,
+        Action::Trace(1),
+    ];
+
+    let ver = libscmp::libseccomp_version();
+
+    if ver >= (2, 4, 0) {
+        actions.push(Action::KillProcess);
+        actions.push(Action::Log);
+
+        if ver >= (2, 5, 0) {
+            actions.push(Action::Notify);
+        }
+    }
+
+    actions
+}
+
 #[test]
 fn test_default_action() {
-    let actions = if libscmp::libseccomp_version() >= (2, 4, 0) {
-        &[
-            Action::Allow,
-            Action::KillProcess,
-            Action::KillThread,
-            Action::Log,
-            Action::Errno(libc::EPERM),
-        ][..]
-    } else {
-        &[
-            Action::Allow,
-            Action::KillThread,
-            Action::Errno(libc::EPERM),
-        ][..]
-    };
-
-    for action in actions.iter().copied() {
+    for action in get_actions().iter().copied() {
         assert_eq!(
             Filter::new(action).unwrap().get_default_action().unwrap(),
             action
@@ -39,14 +46,7 @@ fn test_badarch_action() {
 
     assert_eq!(filter.get_badarch_action().unwrap(), Action::KillThread);
 
-    for action in [
-        Action::Allow,
-        Action::KillThread,
-        Action::Errno(libc::EPERM),
-    ]
-    .iter()
-    .copied()
-    {
+    for action in get_actions().iter().copied() {
         filter.set_badarch_action(action).unwrap();
         assert_eq!(filter.get_badarch_action().unwrap(), action);
     }
