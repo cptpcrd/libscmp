@@ -215,3 +215,6 @@ pub const SCMP_FLTATR_CTL_LOG: libc::c_int = 6;
 pub const SCMP_FLTATR_CTL_SSB: libc::c_int = 7;
 pub const SCMP_FLTATR_CTL_OPTIMIZE: libc::c_int = 8;
 pub const SCMP_FLTATR_API_SYSRAWRC: libc::c_int = 9;
+
+#[cfg(feature = "libseccomp-2-5")]
+pub const SECCOMP_USER_NOTIF_FLAG_CONTINUE: u32 = 1;

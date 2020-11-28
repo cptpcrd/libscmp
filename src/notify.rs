@@ -102,6 +102,22 @@ impl Drop for Notification {
     }
 }
 
+bitflags::bitflags! {
+    /// Represents the flags that can be set on a [`NotificationResponse`].
+    ///
+    /// [`NotificationResponse`]: ./struct.NotificationResponse.html
+    pub struct NotifRespFlags: u32 {
+        /// Indicates that the syscall should be continued as-is.
+        ///
+        /// **WARNING**: This creates the potential for **EXTREMELY DANGEROUS** race condition
+        /// attacks. It is ONLY safe to use if it can be guaranteed that another security
+        /// mechanism will block the process from doing something malicious.
+        ///
+        /// See the `linux/seccomp.h` include file for more information.
+        const CONTINUE = sys::SECCOMP_USER_NOTIF_FLAG_CONTINUE;
+    }
+}
+
 /// Represents a response to a seccomp notification.
 ///
 /// This struct has setter methods for the various fields of the response.
@@ -139,8 +155,8 @@ impl NotificationResponse {
     }
 
     #[inline]
-    pub fn set_flags(&mut self, flags: u32) {
-        unsafe { self.resp.as_mut() }.flags = flags;
+    pub fn set_flags(&mut self, flags: NotifRespFlags) {
+        unsafe { self.resp.as_mut() }.flags = flags.bits();
     }
 
     /// Send a response along the given notification file descriptor.

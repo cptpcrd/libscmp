@@ -38,7 +38,7 @@ pub use err::{Error, Result};
 #[cfg(feature = "libseccomp-2-5")]
 mod notify;
 #[cfg(feature = "libseccomp-2-5")]
-pub use notify::{notify_id_valid, Notification, NotificationResponse};
+pub use notify::{notify_id_valid, NotifRespFlags, Notification, NotificationResponse};
 
 /// Specifies an action to be taken, either as the default action for a filter or when a rule
 /// matches.
