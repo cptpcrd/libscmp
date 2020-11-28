@@ -398,7 +398,7 @@ impl Filter {
     }
 
     #[inline]
-    fn get_attr(&mut self, attr: libc::c_int) -> Result<u32> {
+    fn get_attr(&self, attr: libc::c_int) -> Result<u32> {
         let mut res = 0;
         Error::unpack_enoent(unsafe { sys::seccomp_attr_get(self.ctx.as_ptr(), attr, &mut res) })?;
         Ok(res)
@@ -412,7 +412,7 @@ impl Filter {
 
     /// Get the default filter action (as set when the filter was created or reset).
     #[inline]
-    pub fn get_default_action(&mut self) -> Result<Action> {
+    pub fn get_default_action(&self) -> Result<Action> {
         Action::from_raw(self.get_attr(sys::SCMP_FLTATR_ACT_DEFAULT)?)
             .ok_or_else(|| Error::new(libc::EINVAL))
     }
@@ -420,7 +420,7 @@ impl Filter {
     /// Get the action taken when the loaded filter does not match the application's architecture
     /// (defaults to `KillThread`).
     #[inline]
-    pub fn get_badarch_action(&mut self) -> Result<Action> {
+    pub fn get_badarch_action(&self) -> Result<Action> {
         Action::from_raw(self.get_attr(sys::SCMP_FLTATR_ACT_BADARCH)?)
             .ok_or_else(|| Error::new(libc::EINVAL))
     }
@@ -435,7 +435,7 @@ impl Filter {
     ///
     /// See [`Flag`](./enum.Flag.html) for more details.
     #[inline]
-    pub fn get_flag(&mut self, flag: Flag) -> Result<bool> {
+    pub fn get_flag(&self, flag: Flag) -> Result<bool> {
         Ok(self.get_attr(flag as libc::c_int)? != 0)
     }
 
@@ -453,7 +453,7 @@ impl Filter {
     ///
     /// Note: This only works on libseccomp v2.5.0+.
     #[inline]
-    pub fn get_optimize_level(&mut self) -> Result<u32> {
+    pub fn get_optimize_level(&self) -> Result<u32> {
         self.get_attr(sys::SCMP_FLTATR_CTL_OPTIMIZE)
     }
 

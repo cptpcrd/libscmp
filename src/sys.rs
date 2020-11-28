@@ -81,7 +81,7 @@ extern "C" {
 
     pub fn seccomp_attr_set(ctx: *mut libc::c_void, attr: libc::c_int, value: u32) -> libc::c_int;
     pub fn seccomp_attr_get(
-        ctx: *mut libc::c_void,
+        ctx: *const libc::c_void,
         attr: libc::c_int,
         value: *mut u32,
     ) -> libc::c_int;
