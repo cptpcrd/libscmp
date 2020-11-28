@@ -86,7 +86,7 @@ impl Notification {
     ///
     /// See seccomp_notify_id_valid(3) for an explanation of why this is necessary.
     ///
-    /// [`id()`](#method.id)
+    /// [`id()`]: #method.id
     #[inline]
     pub fn is_id_valid(&self, fd: RawFd) -> bool {
         notify_id_valid(fd, self.id())
