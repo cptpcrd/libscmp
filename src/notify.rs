@@ -53,11 +53,6 @@ impl Notification {
     }
 
     #[inline]
-    pub fn flags(&self) -> u32 {
-        unsafe { self.req.as_ref().flags }
-    }
-
-    #[inline]
     pub fn syscall(&self) -> libc::c_int {
         unsafe { self.req.as_ref().data.nr }
     }
