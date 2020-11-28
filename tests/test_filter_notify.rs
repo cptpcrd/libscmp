@@ -2,7 +2,7 @@
 
 use std::io;
 
-use libscmp::{resolve_syscall_name, Action, Arch, Filter, NotificationResponse};
+use libscmp::{resolve_syscall_name, Action, Arch, Filter, NotifRespFlags, NotificationResponse};
 
 fn setprio(value: libc::c_int) -> io::Result<()> {
     if unsafe { libc::setpriority(0, 0, value) } < 0 {
@@ -90,7 +90,8 @@ fn test_notify_1() {
 }
 
 fn test_notify_2() {
-    // Uses resp.set_error() to return the error
+    // Uses resp.set_error() to return the error and explicitly empties the flags with
+    // resp.set_flags()
 
     let mut filter = Filter::new(Action::Allow).unwrap();
 
@@ -123,6 +124,7 @@ fn test_notify_2() {
     let mut resp = NotificationResponse::new();
     resp.set_id(notif.id());
     resp.set_error(-libc::ENOTSUP);
+    resp.set_flags(NotifRespFlags::empty());
     filter.respond_notify(&mut resp).unwrap();
 
     check_status(pid, 0);
