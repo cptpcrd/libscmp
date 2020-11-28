@@ -109,6 +109,8 @@ bitflags::bitflags! {
         /// mechanism will block the process from doing something malicious.
         ///
         /// See the `linux/seccomp.h` include file for more information.
+        ///
+        /// This is only supported on Linux 5.5+.
         const CONTINUE = sys::SECCOMP_USER_NOTIF_FLAG_CONTINUE;
     }
 }
