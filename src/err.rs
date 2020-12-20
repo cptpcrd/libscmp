@@ -58,6 +58,16 @@ impl Error {
     }
 
     /// Returns the raw OS error code (i.e. an `errno` value).
+    ///
+    /// If [`is_system()`] returns `true`, this code comes from the kernel, and it indicates the
+    /// underlying OS error that caused an operation to fail in a way that libseccomp couldn't
+    /// handle. Otherwise, it indicates a libseccomp error.
+    ///
+    /// (Note: In some cases, if libseccomp fails with `EEXIST`, it may be translated to `ENOENT`
+    /// here. libseccomp often returns `EEXIST` when `ENOENT` would be more appropriate, so this
+    /// library translates it internally.)
+    ///
+    /// [`is_system()`]: #method.is_system
     #[inline]
     pub fn code(&self) -> i32 {
         self.code
