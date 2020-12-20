@@ -97,7 +97,7 @@ impl Arch {
             sys::seccomp_syscall_resolve_name_arch(
                 self as u32,
                 "read\0".as_ptr() as *const libc::c_char,
-            ) >= 0
+            ) != sys::NR_SCMP_ERROR
         }
     }
 
