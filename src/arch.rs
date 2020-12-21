@@ -124,13 +124,10 @@ impl Arch {
 
     #[inline]
     pub(crate) fn get_arch(arch_raw: u32) -> Option<Self> {
-        for arch in ALL_ARCHES.iter().cloned() {
-            if arch as u32 == arch_raw {
-                return Some(arch);
-            }
-        }
-
-        None
+        ALL_ARCHES
+            .iter()
+            .cloned()
+            .find(|&arch| arch as u32 == arch_raw)
     }
 }
 
@@ -145,9 +142,9 @@ impl std::str::FromStr for Arch {
     type Err = ParseArchError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        for (i, &arch_name) in ALL_ARCH_NAMES.iter().enumerate() {
+        for (&arch, &arch_name) in ALL_ARCHES.iter().zip(ALL_ARCH_NAMES.iter()) {
             if s.eq_ignore_ascii_case(arch_name) {
-                return Ok(ALL_ARCHES[i]);
+                return Ok(arch);
             }
         }
 
