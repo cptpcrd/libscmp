@@ -11,4 +11,6 @@ fn test_api_get_set() {
         libscmp::api_set(api).unwrap();
         assert_eq!(libscmp::api_get(), api);
     }
+
+    libscmp::api_set(orig_api).unwrap();
 }
