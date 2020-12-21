@@ -77,6 +77,7 @@ impl Arch {
             // parisc shouldn't be supported either
             debug_assert!(!Arch::PARISC.is_supported());
 
+            // Cut the list before parisc
             debug_assert_eq!(ALL_ARCHES[16], Arch::PARISC);
             return &ALL_ARCHES[..16];
         }
@@ -88,6 +89,7 @@ impl Arch {
             return &ALL_ARCHES[..18];
         }
 
+        // All architectures supported
         ALL_ARCHES
     }
 
@@ -124,6 +126,10 @@ impl Arch {
 
     #[inline]
     pub(crate) fn get_arch(arch_raw: u32) -> Option<Self> {
+        // We can't just transmute() it because it's *possible* that newer versions of libseccomp
+        // could return an architecture that we don't know about, and we don't want to accidentally
+        // trigger UB. (This search shouldn't be *too* expensive.)
+
         ALL_ARCHES
             .iter()
             .cloned()

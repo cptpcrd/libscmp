@@ -248,6 +248,8 @@ impl Filter {
     pub fn new(def_action: Action) -> Result<Self> {
         match NonNull::new(unsafe { sys::seccomp_init(def_action.to_raw()) }) {
             Some(ctx) => Ok(Self { ctx }),
+
+            // It *could* be an ENOMEM situation, but this is more likely.
             None => Err(Error::new(libc::EINVAL)),
         }
     }
