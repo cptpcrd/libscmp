@@ -32,13 +32,13 @@ mod arch;
 mod err;
 mod sys;
 
-pub use arch::{Arch, ParseArchError};
-pub use err::{Error, Result};
+pub use arch::*;
+pub use err::*;
 
 #[cfg(feature = "libseccomp-2-5")]
 mod notify;
 #[cfg(feature = "libseccomp-2-5")]
-pub use notify::{notify_id_valid, NotifRespFlags, Notification, NotificationResponse};
+pub use notify::*;
 
 /// Specifies an action to be taken, either as the default action for a filter or when a rule
 /// matches.
