@@ -596,6 +596,9 @@ pub fn libseccomp_version() -> (libc::c_uint, libc::c_uint, libc::c_uint) {
 
 /// Reset `libseccomp`'s global state.
 ///
+/// This only works on libseccomp v2.5.1+ (NOT v2.5.0+; this part of `seccomp_reset()`'s API was
+/// added in v2.5.1). On previous versions of libseccomp, it will fail with EINVAL.
+///
 /// See seccomp_reset(3) for more details (specifically, the description of what happens if the
 /// specified filter is NULL).
 pub fn reset_global_state() -> Result<()> {
