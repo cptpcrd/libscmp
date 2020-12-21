@@ -26,3 +26,4 @@ bitflags = "1.2"
 
 [package.metadata.docs.rs]
 all-features = true
+rustc-args = ["--cfg", "docsrs"]

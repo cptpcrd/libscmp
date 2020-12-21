@@ -18,6 +18,7 @@ unsafe fn notify_alloc(
 /// Represents a seccomp notification.
 ///
 /// This struct has getter methods for the various fields of the notification.
+#[cfg_attr(docsrs, doc(cfg(feature = "libseccomp-2-5")))]
 pub struct Notification {
     req: NonNull<sys::seccomp_notif>,
 }
@@ -101,6 +102,7 @@ bitflags::bitflags! {
     /// Represents the flags that can be set on a [`NotificationResponse`].
     ///
     /// [`NotificationResponse`]: ./struct.NotificationResponse.html
+    #[cfg_attr(docsrs, doc(cfg(feature = "libseccomp-2-5")))]
     pub struct NotifRespFlags: u32 {
         /// Indicates that the syscall should be continued as-is.
         ///
@@ -118,6 +120,7 @@ bitflags::bitflags! {
 /// Represents a response to a seccomp notification.
 ///
 /// This struct has setter methods for the various fields of the response.
+#[cfg_attr(docsrs, doc(cfg(feature = "libseccomp-2-5")))]
 pub struct NotificationResponse {
     resp: NonNull<sys::seccomp_notif_resp>,
 }
@@ -175,6 +178,7 @@ impl Drop for NotificationResponse {
 /// Check if the given notification ID is still valid.
 ///
 /// See seccomp_notify_id_valid(3) for an explanation of why this is necessary.
+#[cfg_attr(docsrs, doc(cfg(feature = "libseccomp-2-5")))]
 #[inline]
 pub fn notify_id_valid(fd: RawFd, id: u64) -> bool {
     unsafe { sys::seccomp_notify_id_valid(fd, id) == 0 }

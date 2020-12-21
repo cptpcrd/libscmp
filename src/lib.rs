@@ -24,6 +24,9 @@
 //! assert_eq!(unsafe { libc::setpriority(libc::PRIO_PROCESS, 0, 0) }, -1);
 //! assert_eq!(std::io::Error::last_os_error().raw_os_error(), Some(libc::EPERM));
 //! ```
+
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 use std::ffi::{CStr, CString, OsStr, OsString};
 use std::os::unix::prelude::*;
 use std::ptr::NonNull;
@@ -470,25 +473,22 @@ impl Filter {
     }
 
     /// Get the notification file descriptor of the filter after it has been loaded.
-    ///
-    /// Note: This is only available with the `libseccomp-2-5` feature.
     #[cfg(feature = "libseccomp-2-5")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "libseccomp-2-5")))]
     pub fn get_notify_fd(&self) -> Result<RawFd> {
         Error::unpack(unsafe { sys::seccomp_notify_fd(self.ctx.as_ptr()) })
     }
 
     /// Receive a seccomp notification from the notification file descriptor of this filter.
-    ///
-    /// Note: This is only available with the `libseccomp-2-5` feature.
     #[cfg(feature = "libseccomp-2-5")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "libseccomp-2-5")))]
     pub fn receive_notify(&self) -> Result<Notification> {
         Notification::receive(self.get_notify_fd()?)
     }
 
     /// Send a seccomp notification response along the notification file descriptor of this filter.
-    ///
-    /// Note: This is only available with the `libseccomp-2-5` feature.
     #[cfg(feature = "libseccomp-2-5")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "libseccomp-2-5")))]
     pub fn respond_notify(&self, response: &mut NotificationResponse) -> Result<()> {
         response.send_response(self.get_notify_fd()?)
     }
@@ -563,9 +563,8 @@ pub fn resolve_syscall_name_rewrite<N: AsRef<OsStr>>(arch: Arch, name: N) -> Opt
 /// Get the "API level" supported by the running kernel.
 ///
 /// See seccomp_api_get(3) for details.
-///
-/// Note: This is only available with the `libseccomp-2-4` feature.
 #[cfg(feature = "libseccomp-2-4")]
+#[cfg_attr(docsrs, doc(cfg(feature = "libseccomp-2-4")))]
 #[inline]
 pub fn api_get() -> libc::c_uint {
     unsafe { sys::seccomp_api_get() }
@@ -574,9 +573,8 @@ pub fn api_get() -> libc::c_uint {
 /// Force the API level used by libseccomp (do not use unless you know what you're doing).
 ///
 /// See seccomp_api_set(3) for details.
-///
-/// Note: This is only available with the `libseccomp-2-4` feature.
 #[cfg(feature = "libseccomp-2-4")]
+#[cfg_attr(docsrs, doc(cfg(feature = "libseccomp-2-4")))]
 #[inline]
 pub fn api_set(level: libc::c_uint) -> Result<()> {
     Error::unpack(unsafe { sys::seccomp_api_set(level) })?;
