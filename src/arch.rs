@@ -71,7 +71,12 @@ impl Arch {
     /// that were only added in recent versions of `libseccomp`.
     pub fn all() -> &'static [Self] {
         // parisc and parisc64 are not supported on libseccomp<2.4.0
-        if !cfg!(feature = "libseccomp-2-4") && !Arch::PARISC64.is_supported() {
+        if cfg!(feature = "libseccomp-2-4") {
+            // We can that assume we're running on libseccomp v2.4.0+, so parisc and parisc64 must
+            // be supported
+            debug_assert!(Arch::PARISC.is_supported());
+            debug_assert!(Arch::PARISC64.is_supported());
+        } else if !Arch::PARISC64.is_supported() {
             // We weren't told we'll be running on v2.4.0+, and parisc64 isn't supported.
 
             // parisc shouldn't be supported either
@@ -83,7 +88,10 @@ impl Arch {
         }
 
         // riscv64 is not supported on libseccomp<2.5.0
-        if !cfg!(feature = "libseccomp-2-5") && !Arch::RISCV64.is_supported() {
+        if cfg!(feature = "libseccomp-2-5") {
+            // We can that assume we're running on libseccomp v2.5.0+, so riscv64 must be supported
+            debug_assert!(Arch::RISCV64.is_supported());
+        } else if !Arch::RISCV64.is_supported() {
             // We weren't told we'll be running on v2.5.0+, and riscv64 isn't supported.
             debug_assert_eq!(ALL_ARCHES[18], Arch::RISCV64);
             return &ALL_ARCHES[..18];
