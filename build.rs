@@ -21,10 +21,7 @@ fn link_static() -> bool {
     if let Ok(link_type) =
         std::env::var("LIBSCMP_STATIC").or_else(|_| std::env::var("LIBSECCOMP_STATIC"))
     {
-        return match link_type.as_str() {
-            "0" | "false" => false,
-            _ => true,
-        };
+        return !matches!(link_type.as_str(), "0" | "false");
     }
 
     let target_vendor = std::env::var("CARGO_CFG_TARGET_VENDOR").unwrap();
