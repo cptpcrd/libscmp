@@ -121,12 +121,7 @@ impl fmt::Debug for Error {
     }
 }
 
-impl std::error::Error for Error {
-    #[inline]
-    fn description(&self) -> &str {
-        self.strerror()
-    }
-}
+impl std::error::Error for Error {}
 
 impl From<Error> for std::io::Error {
     fn from(e: Error) -> Self {
@@ -275,12 +270,6 @@ mod tests {
 
                 assert_eq!(orig_err.strerror(), *msg);
                 assert_eq!(orig_err.to_string(), format!("{} (libseccomp error)", msg));
-
-                #[allow(deprecated)]
-                {
-                    use std::error::Error;
-                    assert_eq!(orig_err.description(), *msg);
-                }
             }
         }
 

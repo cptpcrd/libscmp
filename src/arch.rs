@@ -169,34 +169,30 @@ impl std::str::FromStr for Arch {
 /// Represents an error when parsing an `Arch` from a string.
 pub struct ParseArchError(());
 
+impl ParseArchError {
+    #[inline]
+    fn desc(&self) -> &str {
+        "Unknown architecture"
+    }
+}
+
 impl fmt::Debug for ParseArchError {
     #[inline]
-    #[allow(deprecated)]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use std::error::Error;
-
         f.debug_struct("ParseArchError")
-            .field("message", &self.description())
+            .field("message", &self.desc())
             .finish()
     }
 }
 
 impl fmt::Display for ParseArchError {
     #[inline]
-    #[allow(deprecated)]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use std::error::Error;
-
-        f.write_str(self.description())
+        f.write_str(self.desc())
     }
 }
 
-impl std::error::Error for ParseArchError {
-    #[inline]
-    fn description(&self) -> &str {
-        "Unknown architecture"
-    }
-}
+impl std::error::Error for ParseArchError {}
 
 #[cfg(test)]
 mod tests {
@@ -238,12 +234,10 @@ mod tests {
     #[allow(deprecated)]
     #[test]
     fn test_arch_parse_error() {
-        use std::error::Error;
-
         let err = ParseArchError(());
 
         assert_eq!(err.to_string(), "Unknown architecture");
-        assert_eq!(err.description(), "Unknown architecture");
+        assert_eq!(err.desc(), "Unknown architecture");
 
         assert_eq!(
             format!("{:?}", err),
