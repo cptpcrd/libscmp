@@ -67,38 +67,22 @@ define_arch!(
 impl Arch {
     /// Return a slice listing all architectures supported by the installed version of `libseccomp`.
     ///
-    /// This probes the currently loaded `libseccomp` to determine whether it supports architectures
-    /// that were only added in recent versions of `libseccomp`.
+    /// This checks the version of `libseccomp` and returns the appropriate list.
     pub fn all() -> &'static [Self] {
-        // parisc and parisc64 are not supported on libseccomp<2.4.0
-        if cfg!(feature = "libseccomp-2-4") {
-            // We can that assume we're running on libseccomp v2.4.0+, so parisc and parisc64 must
-            // be supported
-            debug_assert!(Arch::PARISC.is_supported());
-            debug_assert!(Arch::PARISC64.is_supported());
-        } else if !Arch::PARISC64.is_supported() {
-            // We weren't told we'll be running on v2.4.0+, and parisc64 isn't supported.
-
-            // parisc shouldn't be supported either
-            debug_assert!(!Arch::PARISC.is_supported());
-
-            // Cut the list before parisc
-            debug_assert_eq!(ALL_ARCHES[16], Arch::PARISC);
-            return &ALL_ARCHES[..16];
-        }
-
-        // riscv64 is not supported on libseccomp<2.5.0
         if cfg!(feature = "libseccomp-2-5") {
-            // We can that assume we're running on libseccomp v2.5.0+, so riscv64 must be supported
-            debug_assert!(Arch::RISCV64.is_supported());
-        } else if !Arch::RISCV64.is_supported() {
-            // We weren't told we'll be running on v2.5.0+, and riscv64 isn't supported.
-            debug_assert_eq!(ALL_ARCHES[18], Arch::RISCV64);
-            return &ALL_ARCHES[..18];
+            return ALL_ARCHES;
         }
 
-        // All architectures supported
-        ALL_ARCHES
+        let ver = crate::libseccomp_version();
+
+        if ver >= (2, 5, 0) {
+            ALL_ARCHES
+        } else {
+            match ver {
+                (2, 4, _) => &ALL_ARCHES[..18],
+                _ => &ALL_ARCHES[..16],
+            }
+        }
     }
 
     /// Returns whether the currently loaded libseccomp supports this architecture.
