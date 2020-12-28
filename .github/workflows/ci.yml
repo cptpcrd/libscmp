@@ -186,7 +186,9 @@ jobs:
         target:
           - x86_64-unknown-linux-gnu
         os: ['debian:testing']
-        features: [libseccomp-2-5]
+        features:
+          - ''
+          - libseccomp-2-5
 
     runs-on: ubuntu-latest
     container:
