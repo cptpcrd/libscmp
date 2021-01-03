@@ -35,7 +35,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
 
-      - run: sudo apt install libseccomp-dev
+      - run: sudo apt-get update && sudo apt-get -y install libseccomp-dev
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -146,7 +146,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
 
-      - run: sudo apt install libseccomp-dev
+      - run: sudo apt-get update && sudo apt-get -y install libseccomp-dev
 
       - name: Install tarpaulin
         uses: actions-rs/install@v0.1
