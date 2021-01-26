@@ -94,9 +94,7 @@ jobs:
       - name: Set up repo
         uses: actions/checkout@v2
 
-      - run: apk add gcc libseccomp-dev
-      - run: apk add libseccomp-static
-        if: matrix.os == 'alpine:edge'
+      - run: apk add gcc libseccomp-dev libseccomp-static
 
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
