@@ -125,7 +125,11 @@ impl Arch {
         } else if cfg!(target_arch = "x86") {
             Self::X86
         } else if cfg!(target_arch = "x86_64") {
-            Self::X86_64
+            if cfg!(target_pointer_width = "64") {
+                Self::X86_64
+            } else {
+                Self::X32
+            }
         } else {
             Self::get_arch(unsafe { sys::seccomp_arch_native() })
                 .expect("Unrecognized architecture returned from libseccomp")
