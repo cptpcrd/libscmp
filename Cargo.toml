@@ -11,6 +11,8 @@ categories = ["os::linux-apis"]
 keywords = ["seccomp", "libseccomp"]
 repository = "https://github.com/cptpcrd/libscmp"
 
+links = "seccomp"
+
 [features]
 default = []
 

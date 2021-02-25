@@ -56,6 +56,7 @@ pub const SCMP_CMP_GE: libc::c_int = 5;
 pub const SCMP_CMP_GT: libc::c_int = 6;
 pub const SCMP_CMP_MASKED_EQ: libc::c_int = 7;
 
+#[link(name = "seccomp")]
 extern "C" {
     pub fn seccomp_init(def_action: u32) -> *mut libc::c_void;
     pub fn seccomp_reset(ctx: *mut libc::c_void, def_action: u32) -> libc::c_int;
@@ -119,6 +120,7 @@ extern "C" {
 }
 
 #[cfg(feature = "libseccomp-2-5")]
+#[link(name = "seccomp")]
 extern "C" {
     pub fn seccomp_notify_alloc(
         req: *mut *mut seccomp_notif,
