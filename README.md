@@ -32,7 +32,7 @@ Here's a proof of concept for building against musl using an Alpine Linux Docker
 ```bash
 docker run -v $PWD:/src --rm alpine:latest sh -c '
 set -e
-apk add libseccomp-dev gcc
+apk add libseccomp-static gcc
 wget -O- https://sh.rustup.rs | sh /dev/stdin -y --default-host x86_64-unknown-linux-musl --default-toolchain stable
 source $HOME/.cargo/env
 cd /src
