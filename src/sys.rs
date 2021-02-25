@@ -117,21 +117,23 @@ extern "C" {
     pub fn seccomp_api_get() -> libc::c_uint;
     #[cfg(feature = "libseccomp-2-4")]
     pub fn seccomp_api_set(level: libc::c_uint) -> libc::c_int;
-}
 
-#[cfg(feature = "libseccomp-2-5")]
-#[link(name = "seccomp")]
-extern "C" {
+    #[cfg(feature = "libseccomp-2-5")]
     pub fn seccomp_notify_alloc(
         req: *mut *mut seccomp_notif,
         resp: *mut *mut seccomp_notif_resp,
     ) -> libc::c_int;
+    #[cfg(feature = "libseccomp-2-5")]
     pub fn seccomp_notify_free(req: *mut seccomp_notif, resp: *mut seccomp_notif_resp);
 
+    #[cfg(feature = "libseccomp-2-5")]
     pub fn seccomp_notify_receive(fd: libc::c_int, req: *mut seccomp_notif) -> libc::c_int;
+    #[cfg(feature = "libseccomp-2-5")]
     pub fn seccomp_notify_respond(fd: libc::c_int, resp: *mut seccomp_notif_resp) -> libc::c_int;
 
+    #[cfg(feature = "libseccomp-2-5")]
     pub fn seccomp_notify_id_valid(fd: libc::c_int, id: u64) -> libc::c_int;
+    #[cfg(feature = "libseccomp-2-5")]
     pub fn seccomp_notify_fd(ctx: *const libc::c_void) -> libc::c_int;
 }
 
