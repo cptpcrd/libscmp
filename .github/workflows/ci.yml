@@ -61,24 +61,11 @@ jobs:
         toolchain: [stable, beta, nightly]
         target:
           - x86_64-unknown-linux-musl
-        os: ['alpine:latest', 'alpine:edge']
+        os: ['alpine:latest']
         features:
           - ''
           - libseccomp-2-4
-
-        include:
-          - toolchain: stable
-            target: x86_64-unknown-linux-musl
-            os: alpine:edge
-            features: libseccomp-2-5
-          - toolchain: beta
-            target: x86_64-unknown-linux-musl
-            os: alpine:edge
-            features: libseccomp-2-5
-          - toolchain: nightly
-            target: x86_64-unknown-linux-musl
-            os: alpine:edge
-            features: libseccomp-2-5
+          - libseccomp-2-5
 
     # Allow nightly builds to fail
     continue-on-error: ${{ matrix.toolchain == 'nightly' }}
