@@ -1,6 +1,6 @@
 [package]
 name = "libscmp"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2018"
 
 description = "A safe, sane Rust interface to libseccomp on Linux."
