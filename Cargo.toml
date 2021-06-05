@@ -27,5 +27,6 @@ libc = "0.2"
 bitflags = "1.2"
 
 [package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
 all-features = true
 rustc-args = ["--cfg", "docsrs"]
