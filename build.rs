@@ -24,6 +24,13 @@ fn link_static() -> bool {
         return !matches!(link_type.as_str(), "0" | "false");
     }
 
+    // Statically link on musl (except for the alpine target)
+    let target_vendor = std::env::var("CARGO_CFG_TARGET_VENDOR").unwrap();
+    let target_env = std::env::var("CARGO_CFG_TARGET_ENV").unwrap();
+    if target_env == "musl" && target_vendor != "alpine" {
+        return true;
+    }
+
     std::env::var("CARGO_CFG_TARGET_FEATURE")
         .unwrap_or_default()
         .contains("crt-static")
