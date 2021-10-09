@@ -115,6 +115,11 @@ impl Arch {
     ///
     /// This returns the `Arch` variant that corresponds to the system architecture (it will NEVER
     /// return `Arch::NATIVE`).
+    ///
+    /// Note that [`Arch::NATIVE`] will often work instead. For example,
+    /// `filter.add_arch(Arch::NATIVE)` is equivalent to `filter.add_arch(Arch::native())`. This
+    /// function only needs to be used if it is necessary to e.g. print out the name of the native
+    /// architecture.
     pub fn native() -> Self {
         // For common architectures, do detection at compile time and avoid calling into libseccomp
 
