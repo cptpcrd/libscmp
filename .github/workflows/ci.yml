@@ -137,7 +137,7 @@ jobs:
         uses: actions-rs/install@v0.1
         with:
           crate: cargo-tarpaulin
-          version: latest
+          version: 0.16.0
           use-tool-cache: true
 
       - name: Run tarpaulin
@@ -196,7 +196,7 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           command: install
-          args: cargo-tarpaulin
+          args: --version 0.16.0 cargo-tarpaulin
 
       - name: Run tarpaulin
         uses: actions-rs/cargo@v1
