@@ -106,7 +106,7 @@ impl fmt::Display for Error {
         if self.is_errno {
             write!(f, " (system error, code {})", self.code)
         } else {
-            write!(f, " (libseccomp error)")
+            f.write_str(" (libseccomp error)")
         }
     }
 }
