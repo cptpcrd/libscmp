@@ -81,7 +81,7 @@ impl Error {
         self.is_errno
     }
 
-    fn strerror(&self) -> &'static str {
+    fn strerror<'a>(&self, buf: &'a mut [u8]) -> &'a str {
         if !self.is_errno {
             match self.code {
                 libc::EDOM => return "Architecture-specific failure",
@@ -93,7 +93,13 @@ impl Error {
             }
         }
 
-        unsafe { CStr::from_ptr(libc::strerror(self.code)) }
+        let ret = unsafe { libc::strerror_r(self.code, buf.as_mut_ptr() as *mut _, buf.len()) };
+        if ret == libc::EINVAL {
+            return "Unknown error";
+        }
+        assert_eq!(ret, 0, "strerror_r() returned {}", ret);
+
+        unsafe { CStr::from_ptr(buf.as_ptr() as *const _) }
             .to_str()
             .unwrap()
     }
@@ -101,7 +107,8 @@ impl Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.strerror())?;
+        let mut buf = [0u8; 1024];
+        f.write_str(self.strerror(&mut buf))?;
 
         if self.is_errno {
             write!(f, " (system error, code {})", self.code)
@@ -113,10 +120,13 @@ impl fmt::Display for Error {
 
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut buf = [0u8; 1024];
+        let message = self.strerror(&mut buf);
+
         f.debug_struct("Error")
             .field("code", &self.code)
             .field("is_system", &self.is_errno)
-            .field("message", &self.strerror())
+            .field("message", &message)
             .finish()
     }
 }
@@ -138,7 +148,8 @@ impl From<Error> for std::io::Error {
                 _ => ErrorKind::Other,
             };
 
-            Self::new(kind, e.strerror())
+            let mut buf = [0u8; 1024];
+            Self::new(kind, e.strerror(&mut buf))
         }
     }
 }
@@ -213,12 +224,13 @@ mod tests {
 
         set_errno(libc::ENOENT);
         let err = Error::new(libc::ECANCELED);
+        let mut buf = [0u8; 1024];
         assert_eq!(
             format!("{:?}", err),
             format!(
                 "Error {{ code: {}, is_system: true, message: \"{}\" }}",
                 libc::ENOENT,
-                err.strerror()
+                err.strerror(&mut buf)
             )
         );
     }
@@ -226,6 +238,8 @@ mod tests {
     #[test]
     fn test_display_and_into() {
         use std::io;
+
+        let mut buf = [0u8; 1024];
 
         for (eno, kind, msg) in [
             (
@@ -255,6 +269,8 @@ mod tests {
                 io::ErrorKind::Other,
                 Some("Internal libseccomp error"),
             ),
+            // Bad error code
+            (i32::MAX, io::ErrorKind::Other, Some("Unknown error")),
         ]
         .iter()
         {
@@ -268,7 +284,7 @@ mod tests {
             if let Some(msg) = msg {
                 assert_eq!(io_err.to_string(), *msg);
 
-                assert_eq!(orig_err.strerror(), *msg);
+                assert_eq!(orig_err.strerror(&mut buf), *msg);
                 assert_eq!(orig_err.to_string(), format!("{} (libseccomp error)", msg));
             }
         }
@@ -280,7 +296,7 @@ mod tests {
             orig_err.to_string(),
             format!(
                 "{} (system error, code {})",
-                orig_err.strerror(),
+                orig_err.strerror(&mut buf),
                 libc::ENOENT
             )
         );
