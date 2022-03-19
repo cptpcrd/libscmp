@@ -99,9 +99,16 @@ impl Error {
         }
         assert_eq!(ret, 0, "strerror_r() returned {}", ret);
 
-        unsafe { CStr::from_ptr(buf.as_ptr() as *const _) }
+        let msg = unsafe { CStr::from_ptr(buf.as_ptr() as *const _) }
             .to_str()
-            .unwrap()
+            .unwrap();
+
+        #[cfg(target_env = "musl")]
+        if msg == "No error information" {
+            return "Unknown error";
+        }
+
+        msg
     }
 }
 
