@@ -197,7 +197,6 @@ impl Arg {
     ///
     /// Essentially, this filters for `SYSCALL_ARGS[arg] <= data`.
     #[inline]
-    #[inline]
     pub fn new_le(arg: libc::c_uint, data: u64) -> Self {
         Self::new(arg, Cmp::Le, data, 0)
     }
