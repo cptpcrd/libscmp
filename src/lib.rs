@@ -48,16 +48,17 @@ pub use notify::*;
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum Action {
-    /// Kill the entire process (only supported in libseccomp v2.4.0+)
+    /// Kill the entire process (only supported in libseccomp v2.4.0+ and on Linux 4.14+)
     KillProcess,
     /// Kill the calling thread
     KillThread,
     /// Throw a SIGSYS signal
     Trap,
     /// Notify userspace to allow further auditing of the syscall (only supported in libseccomp
-    /// v2.5.0+)
+    /// v2.5.0+ and on Linux 5.0+)
     Notify,
-    /// Log the action and allow the syscall to be executed (only supported in libseccomp v2.4.0+)
+    /// Log the action and allow the syscall to be executed (only supported in libseccomp v2.4.0+
+    /// and on Linux 4.14+)
     Log,
     /// ALlow the syscall to be executed
     Allow,
@@ -456,7 +457,7 @@ impl Filter {
     ///
     /// See seccomp_attr_get(3) for more information.
     ///
-    /// Note: This only works on libseccomp v2.5.0+.
+    /// Note: This only works on libseccomp v2.5.0+; on older versions it will fail with `ENOENT`.
     #[inline]
     pub fn get_optimize_level(&self) -> Result<u32> {
         self.get_attr(sys::SCMP_FLTATR_CTL_OPTIMIZE)
@@ -466,7 +467,7 @@ impl Filter {
     ///
     /// See seccomp_attr_get(3) for more information.
     ///
-    /// Note: This only works on libseccomp v2.5.0+.
+    /// Note: This only works on libseccomp v2.5.0+; on older versions it will fail with `ENOENT`.
     #[inline]
     pub fn set_optimize_level(&mut self, level: u32) -> Result<()> {
         self.set_attr(sys::SCMP_FLTATR_CTL_OPTIMIZE, level)
