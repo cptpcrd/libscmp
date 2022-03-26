@@ -157,6 +157,7 @@ impl NotificationResponse {
     }
 
     /// Send a response along the given notification file descriptor.
+    #[inline]
     pub fn send_response(&mut self, fd: RawFd) -> crate::Result<()> {
         crate::Error::unpack(unsafe { sys::seccomp_notify_respond(fd, self.resp.as_ptr()) })?;
         Ok(())

@@ -102,6 +102,7 @@ impl Arch {
     }
 
     /// Returns whether the currently loaded libseccomp supports this architecture.
+    #[inline]
     pub fn is_supported(self) -> bool {
         unsafe {
             sys::seccomp_syscall_resolve_name_arch(

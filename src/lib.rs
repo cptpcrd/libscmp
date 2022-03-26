@@ -327,6 +327,7 @@ impl Filter {
     /// Check if the given architecture has been added to the filter.
     ///
     /// See seccomp_arch_exist(3) for details.
+    #[inline]
     pub fn has_arch(&self, arch: Arch) -> Result<bool> {
         let res = unsafe { sys::seccomp_arch_exist(self.ctx.as_ptr(), arch as u32) };
 
@@ -583,6 +584,7 @@ pub fn api_set(level: libc::c_uint) -> Result<()> {
 /// Get the version of the currently loaded `libseccomp` library.
 ///
 /// The version is returned as a `(major, minor, micro)` tuple; for example `(2, 4, 3)`.
+#[inline]
 pub fn libseccomp_version() -> (libc::c_uint, libc::c_uint, libc::c_uint) {
     // It *shouldn't* return NULL. However, the man page mentions it as a possibility, so let's be
     // cautious and panic instead of segfaulting if that happens.
@@ -598,6 +600,7 @@ pub fn libseccomp_version() -> (libc::c_uint, libc::c_uint, libc::c_uint) {
 ///
 /// See seccomp_reset(3) for more details (specifically, the description of what happens if the
 /// specified filter is NULL).
+#[inline]
 pub fn reset_global_state() -> Result<()> {
     Error::unpack(unsafe { sys::seccomp_reset(std::ptr::null_mut(), 0) })?;
     Ok(())
