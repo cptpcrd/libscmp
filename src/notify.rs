@@ -8,10 +8,7 @@ unsafe fn notify_alloc(
     resp_ptr: *mut *mut sys::seccomp_notif_resp,
 ) {
     if sys::seccomp_notify_alloc(req_ptr, resp_ptr) != 0 {
-        std::alloc::handle_alloc_error(std::alloc::Layout::from_size_align_unchecked(
-            std::mem::size_of::<sys::seccomp_notif>(),
-            std::mem::size_of::<sys::seccomp_notif>().next_power_of_two(),
-        ))
+        std::alloc::handle_alloc_error(std::alloc::Layout::new::<sys::seccomp_notif>());
     }
 }
 
