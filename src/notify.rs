@@ -164,6 +164,14 @@ impl NotificationResponse {
     }
 }
 
+
+impl Default for NotificationResponse {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Drop for NotificationResponse {
     #[inline]
     fn drop(&mut self) {
