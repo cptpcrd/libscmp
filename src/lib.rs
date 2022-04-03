@@ -48,11 +48,14 @@ pub use notify::*;
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum Action {
-    /// Kill the entire process (only supported in libseccomp v2.4.0+ and on Linux 4.14+)
+    /// Forcibly kill the entire process with SIGSYS (only supported in libseccomp v2.4.0+ and on
+    /// Linux 4.14+)
     KillProcess,
-    /// Kill the calling thread
+    /// Forcibly kill the calling thread with SIGSYS
     KillThread,
-    /// Throw a SIGSYS signal
+    /// Send the calling thread a SIGSYS signal which can be caught
+    ///
+    /// See `seccomp_init(3)` for more details.
     Trap,
     /// Notify userspace to allow further auditing of the syscall (only supported in libseccomp
     /// v2.5.0+ and on Linux 5.0+)
@@ -305,7 +308,7 @@ impl Filter {
         Ok(())
     }
 
-    /// Add the given architecture to the filter,
+    /// Add the given architecture to the filter.
     ///
     /// See seccomp_arch_add(3) for details.
     #[inline]
@@ -315,7 +318,7 @@ impl Filter {
         Ok(())
     }
 
-    /// Remove the given architecture from the filter,
+    /// Remove the given architecture from the filter.
     ///
     /// See seccomp_arch_remove(3) for details.
     #[inline]
@@ -360,7 +363,8 @@ impl Filter {
     ///
     /// `action` specifies the action to take if the filter matches, `syscall` specifies the system
     /// call number which should be matched against, and `args` is a list of syscall argument
-    /// comparisons to use to match the syscall's arguments.
+    /// comparisons to use to match the syscall's arguments. (If `args` contains more than 6 items,
+    /// this function will fail.)
     ///
     /// This function may alter the rule slightly depending on architecture-specific semantics. To add the
     /// rule with no changes, see [`add_rule_exact()`](#method.add_rule_exact).
