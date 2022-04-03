@@ -28,7 +28,7 @@ fn fork_and_run<F: FnMut()>(mut f: F) -> libc::pid_t {
             }
         }
 
-        pid => return pid,
+        pid => pid,
     }
 }
 
