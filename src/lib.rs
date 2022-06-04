@@ -252,11 +252,29 @@ impl Filter {
     /// Create a new seccomp filter with the given default action.
     #[inline]
     pub fn new(def_action: Action) -> Result<Self> {
-        match NonNull::new(unsafe { sys::seccomp_init(def_action.to_raw()) }) {
-            Some(ctx) => Ok(Self { ctx }),
+        fn init(def_action_raw: u32) -> Option<Filter> {
+            NonNull::new(unsafe { sys::seccomp_init(def_action_raw) }).map(|ctx| Filter { ctx })
+        }
 
-            // It *could* be an ENOMEM situation, but this is more likely.
-            None => Err(Error::new(libc::EINVAL)),
+        let def_action_raw = def_action.to_raw();
+
+        // First, just try to create a filter with the provided action
+        if let Some(filter) = init(def_action_raw) {
+            return Ok(filter);
+        }
+
+        // We don't know if this is an EINVAL situation (unsupported default action) or an ENOMEM
+        // situation (out of memory)
+
+        // Try to create a filter with a default action that is known to be supported
+        if let Some(filter) = init(sys::SCMP_ACT_KILL) {
+            // If that succeeded, reset it to the default action we were given. seccomp_reset()
+            // returns an error code so this lets us get a correct error.
+            Error::unpack(unsafe { sys::seccomp_reset(filter.ctx.as_ptr(), def_action_raw) })?;
+            Ok(filter)
+        } else {
+            // Must have failed because we're out of memory
+            Err(Error::new(libc::ENOMEM))
         }
     }
 
