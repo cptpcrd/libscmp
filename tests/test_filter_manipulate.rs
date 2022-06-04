@@ -7,36 +7,39 @@ fn arch_nonnative() -> Arch {
     }
 }
 
-fn get_actions() -> Vec<Action> {
-    let mut actions = vec![
-        Action::Allow,
-        Action::KillThread,
-        Action::Errno(libc::EPERM),
-        Action::Trap,
-        Action::Trace(1),
-    ];
-
+fn get_actions() -> Vec<(Action, bool)> {
     let ver = libscmp::libseccomp_version();
 
-    if ver >= (2, 4, 0) {
-        actions.push(Action::KillProcess);
-        actions.push(Action::Log);
-
-        if ver >= (2, 5, 0) {
-            actions.push(Action::Notify);
-        }
-    }
-
-    actions
+    vec![
+        (Action::Allow, true),
+        (Action::KillThread, true),
+        (Action::Errno(libc::EPERM), true),
+        (Action::Trap, true),
+        (Action::Trace(1), true),
+        (Action::KillProcess, ver >= (2, 4, 0)),
+        (Action::Log, ver >= (2, 4, 0)),
+        (Action::Notify, ver >= (2, 5, 0)),
+    ]
 }
 
 #[test]
 fn test_default_action() {
-    for action in get_actions().iter().copied() {
-        assert_eq!(
-            Filter::new(action).unwrap().get_default_action().unwrap(),
-            action
-        );
+    for (action, supported) in get_actions().iter().copied() {
+        if supported {
+            assert_eq!(
+                Filter::new(action).unwrap().get_default_action().unwrap(),
+                action
+            );
+
+            let mut filter = Filter::new(Action::KillThread).unwrap();
+            filter.reset(action).unwrap();
+            assert_eq!(filter.get_default_action().unwrap(), action);
+        } else {
+            assert_eq!(Filter::new(action).unwrap_err().code(), libc::EINVAL);
+
+            let mut filter = Filter::new(Action::KillThread).unwrap();
+            assert_eq!(filter.reset(action).unwrap_err().code(), libc::EINVAL);
+        }
     }
 }
 
@@ -46,9 +49,16 @@ fn test_badarch_action() {
 
     assert_eq!(filter.get_badarch_action().unwrap(), Action::KillThread);
 
-    for action in get_actions().iter().copied() {
-        filter.set_badarch_action(action).unwrap();
-        assert_eq!(filter.get_badarch_action().unwrap(), action);
+    for (action, supported) in get_actions().iter().copied() {
+        if supported {
+            filter.set_badarch_action(action).unwrap();
+            assert_eq!(filter.get_badarch_action().unwrap(), action);
+        } else {
+            assert_eq!(
+                filter.set_badarch_action(action).unwrap_err().code(),
+                libc::EINVAL
+            );
+        }
     }
 }
 
