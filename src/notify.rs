@@ -164,7 +164,6 @@ impl NotificationResponse {
     }
 }
 
-
 impl Default for NotificationResponse {
     #[inline]
     fn default() -> Self {
