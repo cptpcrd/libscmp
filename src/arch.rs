@@ -104,13 +104,35 @@ impl Arch {
     /// Returns whether the currently loaded libseccomp supports this architecture.
     #[inline]
     pub fn is_supported(self) -> bool {
+        if let Some(real_native) = Self::REAL_NATIVE {
+            if self == real_native {
+                return true;
+            }
+        }
+
         unsafe {
             sys::seccomp_syscall_resolve_name_arch(
                 self as u32,
-                "read\0".as_ptr() as *const libc::c_char,
+                "socket\0".as_ptr() as *const libc::c_char,
             ) != sys::NR_SCMP_ERROR
         }
     }
+
+    const REAL_NATIVE: Option<Self> = if cfg!(target_arch = "arm") {
+        Some(Self::ARM)
+    } else if cfg!(target_arch = "aarch64") {
+        Some(Self::AARCH64)
+    } else if cfg!(target_arch = "x86") {
+        Some(Self::X86)
+    } else if cfg!(target_arch = "x86_64") {
+        if cfg!(target_pointer_width = "64") {
+            Some(Self::X86_64)
+        } else {
+            Some(Self::X32)
+        }
+    } else {
+        None
+    };
 
     /// Get the "native" architecture.
     ///
@@ -124,18 +146,8 @@ impl Arch {
     pub fn native() -> Self {
         // For common architectures, do detection at compile time and avoid calling into libseccomp
 
-        if cfg!(target_arch = "arm") {
-            Self::ARM
-        } else if cfg!(target_arch = "aarch64") {
-            Self::AARCH64
-        } else if cfg!(target_arch = "x86") {
-            Self::X86
-        } else if cfg!(target_arch = "x86_64") {
-            if cfg!(target_pointer_width = "64") {
-                Self::X86_64
-            } else {
-                Self::X32
-            }
+        if let Some(arch) = Self::REAL_NATIVE {
+            arch
         } else {
             Self::get_arch(unsafe { sys::seccomp_arch_native() })
                 .expect("Unrecognized architecture returned from libseccomp")
